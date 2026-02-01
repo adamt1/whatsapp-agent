@@ -18,6 +18,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+    return NextResponse.json({ debug: 'REACHED_POST' });
     console.log('POST /api/chat started');
     try {
         const { message, chatId } = await req.json();
