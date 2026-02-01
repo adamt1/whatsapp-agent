@@ -22,10 +22,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing message or chatId' }, { status: 400 });
         }
 
-        const maya = mastra.getAgent('mayaAgent');
+        const rotem = mastra.getAgent('rotemAgent');
         let memory;
         try {
-            memory = await maya.getMemory();
+            memory = await rotem.getMemory();
         } catch (memError: any) {
             throw new Error(`Mastra GetMemory Error: ${memError.message}`);
         }
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
         // Generate reply using Mastra with memory
         let result;
         try {
-            result = await maya.generate(message, {
+            result = await rotem.generate(message, {
                 memory: {
                     thread: chatId,
                     resource: chatId,

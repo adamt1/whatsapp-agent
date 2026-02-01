@@ -19,6 +19,27 @@ Deno.serve(async (req: Request) => {
             payload: { diag: "webhook-received", type: payload.typeWebhook, full: payload }
         });
 
+        // 0. Handle Human Hand-off (Detect manual messages from phone)
+        if (payload.typeWebhook === "outgoingMessageReceived") {
+            const chatId = payload.chatId || payload.senderData?.chatId;
+            const sendByApi = payload.sendByApi;
+
+            // If a human sends a message manually (not via API)
+            if (sendByApi === false && chatId) {
+                console.log(`Human intervention detected in chat: ${chatId}. Pausing Rotem.`);
+                await supabase.from("session_control").upsert({
+                    chat_id: chatId,
+                    is_paused: true,
+                    last_human_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                });
+
+                await supabase.from("debug_logs").insert({
+                    payload: { diag: "human-intervention", chatId, reason: "manual-outgoing-message" }
+                });
+            }
+        }
+
         // Filter for incoming messages
         if (payload.typeWebhook === "incomingMessageReceived") {
             const chatId = payload.senderData?.chatId || "";
@@ -35,25 +56,42 @@ Deno.serve(async (req: Request) => {
                 });
             }
 
-            // 2. Blacklist: Ignore specific names
-            const blacklist = ["אמא", "קארין", "שלומי", "קימי"];
-            if (blacklist.some(name => senderName.includes(name) || chatName.includes(name))) {
-                console.log(`Ignoring blacklisted contact: ${senderName || chatName}`);
-                await supabase.from("debug_logs").insert({
-                    payload: { diag: "ignored-message", from: senderNumber, name: senderName || chatName, reason: "blacklist" }
-                });
-                return new Response(JSON.stringify({ status: "ignored_blacklist" }), {
-                    headers: { "Content-Type": "application/json" },
-                });
+            // 1.5 Check if session is paused (Human Hand-off)
+            const { data: session } = await supabase
+                .from("session_control")
+                .select("*")
+                .eq("chat_id", chatId)
+                .single();
+
+            if (session && session.is_paused) {
+                const pauseDuration = 6 * 60 * 60 * 1000; // 6 hours
+                const lastHumanAt = new Date(session.last_human_at).getTime();
+                const now = new Date().getTime();
+
+                if (now - lastHumanAt < pauseDuration) {
+                    console.log(`Rotem is paused for ${chatId} due to human intervention.`);
+                    await supabase.from("debug_logs").insert({
+                        payload: { diag: "session-paused", chatId, reason: "human-intervention-active" }
+                    });
+                    return new Response(JSON.stringify({ status: "paused_for_human" }), {
+                        headers: { "Content-Type": "application/json" },
+                    });
+                } else {
+                    // Reset pause after duration expires
+                    await supabase.from("session_control").update({ is_paused: false }).eq("chat_id", chatId);
+                }
             }
 
-            // 3. Whitelist: Only respond to "ועד בית" or "משרד"
+            // 2. Whitelist: Only respond to specific keywords OR authorized numbers
+            const AUTHORIZED_NUMBERS = ["972526672663", "972542619636", "972526672664", "972502424469", "972507445589"];
             const whitelistKeywords = ["ועד בית", "משרד"];
-            const isAuthorized = whitelistKeywords.some(keyword =>
+
+            const isAuthorizedNumber = AUTHORIZED_NUMBERS.includes(senderNumber);
+            const isAuthorizedKeyword = whitelistKeywords.some(keyword =>
                 senderName.includes(keyword) || chatName.includes(keyword)
             );
 
-            if (!isAuthorized) {
+            if (!isAuthorizedNumber && !isAuthorizedKeyword) {
                 console.log(`Ignoring unauthorized contact (not in whitelist): ${senderName || chatName}`);
                 await supabase.from("debug_logs").insert({
                     payload: { diag: "ignored-message", from: senderNumber, name: senderName || chatName, reason: "not_in_whitelist" }
@@ -63,6 +101,20 @@ Deno.serve(async (req: Request) => {
                 });
             }
 
+            // 3. Blacklist: Ignore specific names (EXCEPT for explicitly authorized numbers)
+            if (!isAuthorizedNumber) {
+                const blacklist = ["אמא", "קארין", "שלומי"];
+                if (blacklist.some(name => senderName.includes(name) || chatName.includes(name))) {
+                    console.log(`Ignoring blacklisted contact: ${senderName || chatName}`);
+                    await supabase.from("debug_logs").insert({
+                        payload: { diag: "ignored-message", from: senderNumber, name: senderName || chatName, reason: "blacklist" }
+                    });
+                    return new Response(JSON.stringify({ status: "ignored_blacklist" }), {
+                        headers: { "Content-Type": "application/json" },
+                    });
+                }
+            }
+
             const isAudio = payload.messageData?.typeMessage === "audioMessage";
             const text = payload.messageData?.textMessageData?.textMessage ||
                 payload.messageData?.extendedTextMessageData?.text ||
@@ -70,40 +122,35 @@ Deno.serve(async (req: Request) => {
 
             console.log(`Incoming ${isAudio ? 'audio' : 'text'} message from ${senderNumber}: ${text}`);
 
-            if (NEXT_JS_API_URL) {
-                console.log("Forwarding to Maya Agent...");
-                try {
-                    const res = await fetch(`${NEXT_JS_API_URL}/api/chat`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Bypass-Tunnel-Reminder": "true"
-                        },
-                        body: JSON.stringify({
-                            message: text,
-                            chatId: chatId,
-                            messageType: isAudio ? "audio" : "text"
-                        })
-                    });
+            // 4. Forward to Next.js API
+            try {
+                const res = await fetch(`${NEXT_JS_API_URL}/api/chat`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message: text,
+                        chatId: chatId,
+                        messageType: isAudio ? "audio" : "text"
+                    })
+                });
 
-                    if (!res.ok) {
-                        const errText = await res.text();
-                        console.error("Maya Agent error:", errText);
-                        await supabase.from("debug_logs").insert({
-                            payload: { diag: "forward-error", status: res.status, details: errText }
-                        });
-                    } else {
-                        console.log("Forwarded successfully.");
-                        await supabase.from("debug_logs").insert({
-                            payload: { diag: "forward-success", to: NEXT_JS_API_URL, from: senderNumber }
-                        });
-                    }
-                } catch (fetchError: any) {
-                    console.error("Fetch error:", fetchError);
+                if (!res.ok) {
+                    const errText = await res.text();
+                    console.error("Rotem Agent error:", errText);
                     await supabase.from("debug_logs").insert({
-                        payload: { diag: "fetch-exception", message: fetchError.message }
+                        payload: { diag: "forward-error", status: res.status, details: errText }
+                    });
+                } else {
+                    console.log("Forwarded successfully.");
+                    await supabase.from("debug_logs").insert({
+                        payload: { diag: "forward-success", to: NEXT_JS_API_URL, from: senderNumber }
                     });
                 }
+            } catch (fetchError: any) {
+                console.error("Fetch error:", fetchError);
+                await supabase.from("debug_logs").insert({
+                    payload: { diag: "fetch-exception", message: fetchError.message }
+                });
             }
         }
 
