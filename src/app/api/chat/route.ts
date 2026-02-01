@@ -18,6 +18,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+    const dbUrl = process.env.DATABASE_URL || '';
+    console.log(`DATABASE_URL length: ${dbUrl.length}, startsWith: ${dbUrl.substring(0, 10)}`);
     try {
         const { message, chatId } = await req.json();
 
