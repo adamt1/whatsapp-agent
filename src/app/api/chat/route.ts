@@ -42,11 +42,16 @@ export async function POST(req: NextRequest) {
 
         // Generate Audio using ElevenLabs
         console.log(`Generating audio with ElevenLabs [eleven_v3]...`);
-        const audioStream = await elevenlabs.textToSpeech.convert(ELEVENLABS_VOICE_ID, {
-            outputFormat: "mp3_44100_128",
-            text: replyText,
-            modelId: "eleven_v3",
-        });
+        let audioStream;
+        try {
+            audioStream = await elevenlabs.textToSpeech.convert(ELEVENLABS_VOICE_ID, {
+                outputFormat: "mp3_44100_128",
+                text: replyText,
+                modelId: "eleven_v3",
+            });
+        } catch (elevenError: any) {
+            throw new Error(`ElevenLabs Error: ${elevenError.message}`);
+        }
 
         // Convert stream to Buffer
         const chunks = [];
@@ -58,6 +63,7 @@ export async function POST(req: NextRequest) {
 
         // Upload to Supabase Storage
         const fileName = `reply_${chatId}_${Date.now()}.mp3`;
+        console.log(`Uploading to Supabase: ${fileName}`);
         const { data: uploadData, error: uploadError } = await supabase.storage
             .from('audio-messages')
             .upload(fileName, audioBuffer, {
@@ -67,7 +73,8 @@ export async function POST(req: NextRequest) {
             });
 
         if (uploadError) {
-            throw new Error(`Supabase Storage Error: ${uploadError.message}`);
+            console.error('Supabase Storage Upload Detail:', uploadError);
+            throw new Error(`Supabase Storage Error: ${uploadError.message || JSON.stringify(uploadError)}`);
         }
 
         // Get Public URL
