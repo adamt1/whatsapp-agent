@@ -135,7 +135,12 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, reply: replyText, audioUrl: publicUrl, greenData });
     } catch (error: any) {
+        const dbUrl = process.env.DATABASE_URL || '';
+        const maskedUrl = dbUrl.replace(/:([^@]+)@/, ':****@');
         console.error('Chat API Error:', error);
-        return NextResponse.json({ error: `MAYA_CRITICAL_DEBUG: ${error.message}` }, { status: 500 });
+        return NextResponse.json({
+            error: `MAYA_CRITICAL_DEBUG: ${error.message}`,
+            debug_url: maskedUrl
+        }, { status: 500 });
     }
 }
