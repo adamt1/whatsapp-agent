@@ -19,6 +19,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     console.log('POST /api/chat started');
+    const dbUrl = process.env.DATABASE_URL || '';
+    const maskedUrl = dbUrl.replace(/:([^@]+)@/, ':****@');
+    console.log(`Using DATABASE_URL format: ${maskedUrl}`);
     try {
         const { message, chatId } = await req.json();
 
