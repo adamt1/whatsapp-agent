@@ -21,15 +21,44 @@ Deno.serve(async (req: Request) => {
 
         // Filter for incoming messages
         if (payload.typeWebhook === "incomingMessageReceived") {
-            const chatId = payload.senderData?.chatId;
+            const chatId = payload.senderData?.chatId || "";
             const sender = payload.senderData?.sender || chatId;
             const senderNumber = sender?.split("@")[0];
+            const senderName = payload.senderData?.senderName || "";
+            const chatName = payload.senderData?.chatName || "";
 
-            // Security Check: Only respond to authorized number
-            const AUTHORIZED_NUMBER = "972526672663";
-            if (senderNumber !== AUTHORIZED_NUMBER) {
-                console.log(`Ignoring message from unauthorized number: ${senderNumber}`);
-                return new Response(JSON.stringify({ status: "ignored" }), {
+            // 1. Block groups
+            if (chatId.endsWith("@g.us")) {
+                console.log(`Ignoring group message: ${chatId}`);
+                return new Response(JSON.stringify({ status: "ignored_group" }), {
+                    headers: { "Content-Type": "application/json" },
+                });
+            }
+
+            // 2. Blacklist: Ignore specific names
+            const blacklist = ["אמא", "קארין", "שלומי", "קימי"];
+            if (blacklist.some(name => senderName.includes(name) || chatName.includes(name))) {
+                console.log(`Ignoring blacklisted contact: ${senderName || chatName}`);
+                await supabase.from("debug_logs").insert({
+                    payload: { diag: "ignored-message", from: senderNumber, name: senderName || chatName, reason: "blacklist" }
+                });
+                return new Response(JSON.stringify({ status: "ignored_blacklist" }), {
+                    headers: { "Content-Type": "application/json" },
+                });
+            }
+
+            // 3. Whitelist: Only respond to "ועד בית" or "משרד"
+            const whitelistKeywords = ["ועד בית", "משרד"];
+            const isAuthorized = whitelistKeywords.some(keyword =>
+                senderName.includes(keyword) || chatName.includes(keyword)
+            );
+
+            if (!isAuthorized) {
+                console.log(`Ignoring unauthorized contact (not in whitelist): ${senderName || chatName}`);
+                await supabase.from("debug_logs").insert({
+                    payload: { diag: "ignored-message", from: senderNumber, name: senderName || chatName, reason: "not_in_whitelist" }
+                });
+                return new Response(JSON.stringify({ status: "ignored_whitelist" }), {
                     headers: { "Content-Type": "application/json" },
                 });
             }
