@@ -22,20 +22,34 @@ export async function POST(req: NextRequest) {
         }
 
         const maya = mastra.getAgent('mayaAgent');
-        const memory = await maya.getMemory();
+        let memory;
+        try {
+            memory = await maya.getMemory();
+        } catch (memError: any) {
+            throw new Error(`Mastra GetMemory Error: ${memError.message}`);
+        }
 
         // Ensure the Postgres tables exist
         if (memory?.storage && 'init' in memory.storage) {
-            await (memory.storage as any).init();
+            try {
+                await (memory.storage as any).init();
+            } catch (initError: any) {
+                throw new Error(`Mastra Storage Init Error: ${initError.message}`);
+            }
         }
 
         // Generate reply using Mastra with memory
-        const result = await maya.generate(message, {
-            memory: {
-                thread: chatId,
-                resource: chatId,
-            },
-        });
+        let result;
+        try {
+            result = await maya.generate(message, {
+                memory: {
+                    thread: chatId,
+                    resource: chatId,
+                },
+            });
+        } catch (genError: any) {
+            throw new Error(`Mastra Generate Error: ${genError.message}`);
+        }
 
         const replyText = result.text;
         console.log(`Generated reply for ${chatId}: ${replyText}`);
