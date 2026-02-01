@@ -24,11 +24,22 @@ Deno.serve(async (req: Request) => {
             const chatId = payload.senderData?.chatId;
             const sender = payload.senderData?.sender || chatId;
             const senderNumber = sender?.split("@")[0];
+
+            // Security Check: Only respond to authorized number
+            const AUTHORIZED_NUMBER = "972526672663";
+            if (senderNumber !== AUTHORIZED_NUMBER) {
+                console.log(`Ignoring message from unauthorized number: ${senderNumber}`);
+                return new Response(JSON.stringify({ status: "ignored" }), {
+                    headers: { "Content-Type": "application/json" },
+                });
+            }
+
+            const isAudio = payload.messageData?.typeMessage === "audioMessage";
             const text = payload.messageData?.textMessageData?.textMessage ||
                 payload.messageData?.extendedTextMessageData?.text ||
-                "";
+                (isAudio ? "שלחת לי הודעה קולית" : ""); // Handle audio gracefully
 
-            console.log(`Incoming message from ${senderNumber}: ${text}`);
+            console.log(`Incoming ${isAudio ? 'audio' : 'text'} message from ${senderNumber}: ${text}`);
 
             if (NEXT_JS_API_URL) {
                 console.log("Forwarding to Maya Agent...");
@@ -41,7 +52,8 @@ Deno.serve(async (req: Request) => {
                         },
                         body: JSON.stringify({
                             message: text,
-                            chatId: chatId
+                            chatId: chatId,
+                            messageType: isAudio ? "audio" : "text"
                         })
                     });
 
