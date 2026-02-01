@@ -13,13 +13,8 @@ const elevenlabs = new ElevenLabsClient({
     apiKey: ELEVENLABS_API_KEY,
 });
 
-export async function GET() {
-    return NextResponse.json({ ok: true, message: 'MAYA_PONG' });
-}
 
 export async function POST(req: NextRequest) {
-    const dbUrl = process.env.DATABASE_URL || '';
-    console.log(`DATABASE_URL length: ${dbUrl.length}, startsWith: ${dbUrl.substring(0, 10)}`);
     try {
         const { message, chatId } = await req.json();
 
@@ -97,8 +92,7 @@ export async function POST(req: NextRequest) {
             });
 
         if (uploadError) {
-            console.error('Supabase Storage Upload Detail:', uploadError);
-            throw new Error(`Supabase Storage Error: ${uploadError.message || JSON.stringify(uploadError)}`);
+            throw new Error(`Supabase Storage Error: ${uploadError.message}`);
         }
 
         // Get Public URL

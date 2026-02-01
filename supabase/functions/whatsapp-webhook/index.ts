@@ -6,8 +6,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// Use the active localtunnel URL
-const NEXT_JS_API_URL = "https://legal-comics-visit.loca.lt";
+// Use the Vercel production URL
+const NEXT_JS_API_URL = "https://whatsapp-agent-weld.vercel.app";
 
 Deno.serve(async (req: Request) => {
     try {
