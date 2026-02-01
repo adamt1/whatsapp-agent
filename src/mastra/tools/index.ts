@@ -1,4 +1,4 @@
-import { createTool } from '@mastra/core/tool';
+import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
 export const registerLeadTool = createTool({
@@ -11,7 +11,7 @@ export const registerLeadTool = createTool({
         propertySize: z.string().describe('Size of the property (e.g. 100 sqm or 5 rooms)'),
         additionalNotes: z.string().optional().describe('Any additional notes from the conversation'),
     }),
-    execute: async ({ context }) => {
+    execute: async (args) => {
         const WEBHOOK_URL = 'https://akcleaninng.app.n8n.cloud/webhook-test/newlead';
 
         try {
@@ -21,7 +21,7 @@ export const registerLeadTool = createTool({
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    ...context,
+                    ...args,
                     source: 'WhatsApp Bot',
                     timestamp: new Date().toISOString(),
                 }),
