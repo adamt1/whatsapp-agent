@@ -13,6 +13,10 @@ const elevenlabs = new ElevenLabsClient({
     apiKey: ELEVENLABS_API_KEY,
 });
 
+export async function GET() {
+    return NextResponse.json({ ok: true, message: 'MAYA_PONG' });
+}
+
 export async function POST(req: NextRequest) {
     console.log('POST /api/chat started');
     try {
