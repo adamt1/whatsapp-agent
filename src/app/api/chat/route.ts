@@ -14,6 +14,7 @@ const elevenlabs = new ElevenLabsClient({
 });
 
 export async function POST(req: NextRequest) {
+    console.log('POST /api/chat started');
     try {
         const { message, chatId } = await req.json();
 
@@ -69,9 +70,13 @@ export async function POST(req: NextRequest) {
 
         // Convert stream to Buffer
         const chunks = [];
-        // @ts-ignore
-        for await (const chunk of audioStream) {
-            chunks.push(chunk);
+        try {
+            // @ts-ignore
+            for await (const chunk of audioStream) {
+                chunks.push(chunk);
+            }
+        } catch (streamError: any) {
+            throw new Error(`Audio Stream Error: ${streamError.message}`);
         }
         const audioBuffer = Buffer.concat(chunks);
 
