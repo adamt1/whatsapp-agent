@@ -220,3 +220,40 @@ export const icountGetIncomeTaxReportTool = createTool({
         }
     }
 });
+export const icountGetFullReportTool = createTool({
+    id: 'icount-get-full-report',
+    description: 'Retrieves a full comprehensive report from iCount for a specific date range.',
+    inputSchema: z.object({
+        startDate: z.string().describe('Start date in YYYY-MM-DD format'),
+        endDate: z.string().describe('End date in YYYY-MM-DD format'),
+        email: z.string().email().optional().describe('If provided, the report will be sent to this email address'),
+    }),
+    execute: async ({ startDate, endDate, email }) => {
+        try {
+            const report = await icountService.getFullReport({
+                start_date: startDate,
+                end_date: endDate,
+                email,
+            });
+
+            if (report && report.status) {
+                return {
+                    success: true,
+                    report: report.full_report,
+                    emailStatus: report.email_status,
+                    emailAddress: report.email_address,
+                };
+            }
+            return {
+                success: false,
+                message: report?.error_description || 'חלה שגיאה בקבלת הדוח המלא מ-iCount.'
+            };
+        } catch (error) {
+            console.error('iCount get full report tool error:', error);
+            return {
+                success: false,
+                message: 'חלה שגיאה טכנית בחיבור ל-iCount.'
+            };
+        }
+    }
+});
