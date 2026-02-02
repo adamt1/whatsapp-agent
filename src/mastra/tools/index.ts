@@ -257,3 +257,79 @@ export const icountGetFullReportTool = createTool({
         }
     }
 });
+
+export const icountGetAccountingExportTypesTool = createTool({
+    id: 'icount-get-accounting-export-types',
+    description: 'Retrieves available accounting export types from iCount.',
+    inputSchema: z.object({}),
+    execute: async () => {
+        try {
+            const result = await icountService.getAccountingExportTypes();
+            if (result && result.status) {
+                return {
+                    success: true,
+                    exportTypes: result.export_types,
+                };
+            }
+            return {
+                success: false,
+                message: result?.error_description || 'חלה שגיאה בקבלת סוגי הייצוא מ-iCount.'
+            };
+        } catch (error) {
+            console.error('iCount get accounting export types tool error:', error);
+            return {
+                success: false,
+                message: 'חלה שגיאה טכנית בחיבור ל-iCount.'
+            };
+        }
+    }
+});
+
+export const icountExportAccountingDataTool = createTool({
+    id: 'icount-export-accounting-data',
+    description: 'Initiates an accounting data export from iCount to external software.',
+    inputSchema: z.object({
+        exportType: z.string().describe('The export type (retrieved from get-accounting-export-types)'),
+        startDate: z.string().describe('Start date in YYYY-MM-DD format'),
+        endDate: z.string().describe('End date in YYYY-MM-DD format'),
+        exportDocs: z.boolean().optional().describe('Export accounting documents (default: true)'),
+        exportExpenses: z.boolean().optional().describe('Export expenses (default: false)'),
+        exportClients: z.boolean().optional().describe('Export client cards (default: false)'),
+        exportSuppliers: z.boolean().optional().describe('Export supplier cards (default: false)'),
+        webhookUrl: z.string().url().optional().describe('URL to send the export result to'),
+        webhookMethod: z.enum(['JSON', 'POST', 'GET']).optional().describe('Method to send the webhook (default: JSON)'),
+    }),
+    execute: async (params) => {
+        try {
+            const result = await icountService.exportAccountingData({
+                export_type: params.exportType,
+                start_date: params.startDate,
+                end_date: params.endDate,
+                export_docs: params.exportDocs,
+                export_expenses: params.exportExpenses,
+                export_clients: params.exportClients,
+                export_suppliers: params.exportSuppliers,
+                webhook_url: params.webhookUrl,
+                webhook_method: params.webhookMethod,
+            });
+
+            if (result && result.status) {
+                return {
+                    success: true,
+                    message: 'תהליך הייצוא החל בהצלחה.',
+                    result: result,
+                };
+            }
+            return {
+                success: false,
+                message: result?.error_description || 'חלה שגיאה בהפעלת הייצוא מ-iCount.'
+            };
+        } catch (error) {
+            console.error('iCount export accounting data tool error:', error);
+            return {
+                success: false,
+                message: 'חלה שגיאה טכנית בחיבור ל-iCount.'
+            };
+        }
+    }
+});

@@ -246,6 +246,78 @@ export class ICountService {
             return null;
         }
     }
+    /**
+     * Get available accounting export types
+     */
+    async getAccountingExportTypes() {
+        const cid = this.companyId;
+        const user = process.env.ICOUNT_USER || '';
+        const pass = process.env.ICOUNT_PASS || '';
+
+        try {
+            const response = await fetch(`https://api.icount.co.il/api/v3.php/export/accounting_export_types`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ cid, user, pass }),
+            });
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('iCount getAccountingExportTypes Exception:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Export accounting data
+     */
+    async exportAccountingData(params: {
+        export_type: string;
+        start_date: string;
+        end_date: string;
+        export_docs?: boolean;
+        export_expenses?: boolean;
+        export_clients?: boolean;
+        export_suppliers?: boolean;
+        webhook_url?: string;
+        webhook_method?: 'JSON' | 'POST' | 'GET';
+    }) {
+        const cid = this.companyId;
+        const user = process.env.ICOUNT_USER || '';
+        const pass = process.env.ICOUNT_PASS || '';
+
+        try {
+            const response = await fetch(`https://api.icount.co.il/api/v3.php/export/accounting_data`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cid,
+                    user,
+                    pass,
+                    export_type: params.export_type,
+                    start_date: params.start_date,
+                    end_date: params.end_date,
+                    export_docs: params.export_docs ?? true,
+                    export_expenses: params.export_expenses ?? false,
+                    export_clients: params.export_clients ?? false,
+                    export_suppliers: params.export_suppliers ?? false,
+                    webhook_url: params.webhook_url,
+                    webhook_method: params.webhook_method ?? 'JSON',
+                }),
+            });
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('iCount exportAccountingData Exception:', error);
+            return null;
+        }
+    }
 }
 
 export const icountService = new ICountService();

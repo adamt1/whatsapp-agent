@@ -3,7 +3,7 @@ import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { PostgresStore } from '@mastra/pg';
 
-import { registerLeadTool, icountTool, icountCreateDocumentTool, icountGetAccountInfoTool, icountGetIncomeReportTool, icountGetIncomeTaxReportTool, icountGetFullReportTool } from '../tools';
+import { registerLeadTool, icountTool, icountCreateDocumentTool, icountGetAccountInfoTool, icountGetIncomeReportTool, icountGetIncomeTaxReportTool, icountGetFullReportTool, icountGetAccountingExportTypesTool, icountExportAccountingDataTool } from '../tools';
 
 // Initialize memory with Supabase Postgres
 const memory = new Memory({
@@ -49,6 +49,7 @@ export const rotemAgent = new Agent({
             *   **לבניינים:** השתמשי בתיאור: "הסכם התקשרות עבור שירותי ניקיון לבניין". הוסיפי שורות פירוט: "ניקיון 3 פעמים בשבוע (ראשון, שלישי, חמישי)", "פירוט: שטיפת לוביים ומדרגות, ניקיון שירותים, חלונות, מעלית וסביבת הבניין".
         - ודאי תמיד שיש לך את שם הלקוח המדויק והמחיר המוסכם לפני יצירת המסמך.
         - אם מנהל (Admin) מבקש דוח הכנסות או מכירות, השתמשי ב-'icount-get-income-report'. אם הוא מבקש דוח מע"מ (Income Tax Report), השתמשי ב-'icount-get-income-tax-report'. דוח מלא ומפורט ניתן להפיק עם 'icount-get-full-report'.
+        - לייצוא נתונים לתוכנת הנהלת חשבונות חיצונית, השתמשי ב-'icount-get-accounting-export-types' כדי לראות סוגים זמינים ואז ב-'icount-export-accounting-data' כדי לבצע את הייצוא.
     6. לאחר בחירת אופציה 2, תבקשי פרטים ותבטיחי טיפול מהיר.
     7. השתמשי בהרבה אימוג'ים מתאימים כדי לשדר שירותיות ושמחה. אל תתקמצני באימוג'ים! 🏢✨🧹🧼🚿😊🙌🙏✅
     8. שמרי על תשובות קצרות שמתאימות לוואטסאפ.
@@ -64,5 +65,7 @@ export const rotemAgent = new Agent({
     icountGetIncomeReport: icountGetIncomeReportTool,
     icountGetIncomeTaxReport: icountGetIncomeTaxReportTool,
     icountGetFullReport: icountGetFullReportTool,
+    icountGetAccountingExportTypes: icountGetAccountingExportTypesTool,
+    icountExportAccountingData: icountExportAccountingDataTool,
   },
 });
