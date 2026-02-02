@@ -39,8 +39,24 @@ export async function POST(req: NextRequest) {
             });
         } catch (genError: any) {
             console.error('Mastra Generate Detailed Error:', genError);
-            // Include full error object in the throw so the caller (webhook) can log it
-            throw new Error(`Mastra Generate Error: ${genError.message} | ${JSON.stringify(genError)}`);
+
+            // AI SDK errors often have non-enumerable properties. Serialize manually.
+            const errorDetails: any = {
+                message: genError.message,
+                name: genError.name,
+                stack: genError.stack,
+            };
+
+            // Capture specific AI SDK error details
+            if (genError.response) {
+                errorDetails.status = genError.response.status;
+                errorDetails.statusText = genError.response.statusText;
+            }
+            if (genError.data) {
+                errorDetails.data = genError.data;
+            }
+
+            throw new Error(`Mastra Generate Error: ${genError.message} | Details: ${JSON.stringify(errorDetails)}`);
         }
 
         const replyText = result.text;

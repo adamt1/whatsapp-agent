@@ -23,9 +23,23 @@ async function simulateAgent() {
     } catch (error: any) {
         console.error('--- GENERATION FAILED ---');
         console.error('Message:', error.message);
-        console.error('Details:', JSON.stringify(error, null, 2));
-        if (error.stack) {
-            console.error('Stack:', error.stack);
+
+        // Log all properties (since AI SDK errors often have custom props)
+        const allProps: any = {};
+        Object.getOwnPropertyNames(error).forEach(prop => {
+            allProps[prop] = error[prop];
+        });
+
+        console.error('Full Error Object:', JSON.stringify(allProps, null, 2));
+
+        if (error.response) {
+            console.error('Response Status:', error.response.status);
+            try {
+                const body = await error.response.json();
+                console.error('Response Body:', JSON.stringify(body, null, 2));
+            } catch (e) {
+                console.error('Could not parse response body');
+            }
         }
     }
 }
