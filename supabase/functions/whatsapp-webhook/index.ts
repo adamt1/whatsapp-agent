@@ -22,15 +22,39 @@ Deno.serve(async (req: Request) => {
         // 0. Handle Human Hand-off (Detect manual messages from phone)
         if (payload.typeWebhook === "outgoingMessageReceived" || payload.typeWebhook === "outgoingAPIMessageReceived") {
             const chatId = payload.chatId || payload.senderData?.chatId;
+            const wid = payload.instanceData?.wid;
             const sendByApi = payload.sendByApi;
             const typeWebhook = payload.typeWebhook;
 
+            const text = payload.messageData?.textMessageData?.textMessage ||
+                payload.messageData?.extendedTextMessageData?.text || "";
+
+            // Check for unpause command
+            const isUnpauseCommand = text.includes("רותם חזרי") || text.toLowerCase().includes("resume");
+
+            if (isUnpauseCommand && chatId) {
+                console.log(`Unpause command detected: ${text}. Resuming Rotem for ${chatId}.`);
+                await supabase.from("session_control").upsert({
+                    chat_id: chatId,
+                    is_paused: false,
+                    updated_at: new Date().toISOString()
+                });
+
+                await supabase.from("debug_logs").insert({
+                    payload: { diag: "session-unpaused-command", chatId, text }
+                });
+
+                return new Response(JSON.stringify({ status: "unpaused" }), {
+                    headers: { "Content-Type": "application/json" },
+                });
+            }
+
             // Manual message detection:
             // 1. typeWebhook is outgoingMessageReceived AND sendByApi is not true
-            // 2. OR it's outgoingAPIMessageReceived but we want to be safe (actually we only care about manual)
             const isManual = (typeWebhook === "outgoingMessageReceived" && sendByApi !== true);
 
-            if (isManual && chatId) {
+            // ONLY pause if talking to SOMEONE ELSE (not self)
+            if (isManual && chatId && chatId !== wid) {
                 console.log(`Human intervention detected in chat: ${chatId}. Pausing Rotem.`);
                 await supabase.from("session_control").upsert({
                     chat_id: chatId,
@@ -42,6 +66,17 @@ Deno.serve(async (req: Request) => {
                 await supabase.from("debug_logs").insert({
                     payload: { diag: "human-intervention", chatId, reason: "manual-outgoing-message", typeWebhook, sendByApi }
                 });
+            }
+
+            // SPECIAL CASE: If it's a manual message to self, treat it as an incoming prompt!
+            if (isManual && chatId === wid) {
+                console.log(`Self-chat detected for owner ${wid}. Processing as incoming prompt.`);
+                payload.typeWebhook = "incomingMessageReceived";
+                payload.senderData = {
+                    chatId: wid,
+                    sender: wid,
+                    senderName: payload.senderData?.senderName || "Owner",
+                };
             }
         }
 

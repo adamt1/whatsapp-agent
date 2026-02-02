@@ -41,8 +41,11 @@ export async function POST(req: NextRequest) {
 
         // Generate reply using Mastra with memory (always do this to keep context)
         let result;
+        const senderId = chatId.split('@')[0];
+        const messageWithContext = `[Sender ID: ${senderId}]\n${message}`;
+
         try {
-            result = await rotem.generate(message, {
+            result = await rotem.generate(messageWithContext, {
                 memory: {
                     thread: chatId,
                     resource: chatId,
