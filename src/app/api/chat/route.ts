@@ -16,7 +16,20 @@ const elevenlabs = new ElevenLabsClient({
 
 export async function POST(req: NextRequest) {
     try {
-        const { message, chatId, messageType, isPaused } = await req.json();
+        const body = await req.json();
+        const { message, chatId, messageType, isPaused } = body;
+
+        console.log(`[Next.js API] Received request for chatId: ${chatId}`);
+
+        // Log entry to Supabase for tracking the chain
+        await supabase.from('debug_logs').insert({
+            payload: {
+                diag: 'chat-api-entry',
+                chatId,
+                messageType,
+                isPaused
+            }
+        });
 
         if (!message || !chatId) {
             return NextResponse.json({ error: 'Missing message or chatId' }, { status: 400 });
