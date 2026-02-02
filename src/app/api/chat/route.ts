@@ -39,8 +39,8 @@ export async function POST(req: NextRequest) {
             });
         } catch (genError: any) {
             console.error('Mastra Generate Detailed Error:', genError);
-            // Fallback: If memory/agent fails, we could try a simplified call or just error
-            throw new Error(`Mastra Generate Error: ${genError.message}`);
+            // Include full error object in the throw so the caller (webhook) can log it
+            throw new Error(`Mastra Generate Error: ${genError.message} | ${JSON.stringify(genError)}`);
         }
 
         const replyText = result.text;
