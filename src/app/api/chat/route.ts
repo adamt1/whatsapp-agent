@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
         const messageWithContext = `[Sender ID: ${senderId}]\n${message}`;
 
         try {
-            console.log(`[v3.6] Calling Mastra generate for ${chatId}...`);
+            console.log(`Calling Mastra generate for ${chatId}...`);
             result = await rotem.generate(messageWithContext, {
                 memory: {
                     thread: chatId,
@@ -38,12 +38,11 @@ export async function POST(req: NextRequest) {
                 },
             });
         } catch (genError: any) {
-            console.error('[v3.6] Mastra Generate Detailed Error:', genError);
+            console.error('Mastra Generate Detailed Error:', genError);
 
             const errorDetails: any = {
                 message: genError.message,
                 name: genError.name,
-                version: 'v3.6',
             };
 
             if (genError.response) {
@@ -54,17 +53,17 @@ export async function POST(req: NextRequest) {
                 errorDetails.data = genError.data;
             }
 
-            // LOG DIRECTLY TO SUPABASE to ensure we see it
+            // Keep the direct Supabase logging as it is very helpful for production
             await supabase.from('debug_logs').insert({
                 payload: {
-                    diag: 'chat-api-error-v3.6',
+                    diag: 'chat-api-error',
                     chatId,
                     error: errorDetails,
                     rawMessage: message
                 }
             });
 
-            throw new Error(`Mastra Generate Error [v3.6]: ${genError.message}`);
+            throw new Error(`Mastra Generate Error: ${genError.message}`);
         }
 
         const replyText = result.text;
