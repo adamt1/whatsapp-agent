@@ -95,7 +95,7 @@ export default function Home() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
           <div>
-            <h1 className="text-3xl font-bold text-green-500">WhatsApp Green API</h1>
+            <h1 className="text-3xl font-bold text-green-500">WhatsApp Green API v3.5</h1>
             <p className="text-white/60">Instance Control Panel</p>
           </div>
           <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
