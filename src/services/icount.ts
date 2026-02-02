@@ -137,6 +137,44 @@ export class ICountService {
     }
 
     /**
+     * Get Income Report for a specific date range
+     */
+    async getIncomeReport(params: { start_date: string; end_date: string; client_id?: number }) {
+        if (!this.apiKey || !this.companyId) {
+            const user = process.env.ICOUNT_USER || '';
+            const pass = process.env.ICOUNT_PASS || '';
+            if (!user || !pass) return null;
+        }
+
+        const cid = this.companyId;
+        const user = process.env.ICOUNT_USER || '';
+        const pass = process.env.ICOUNT_PASS || '';
+
+        try {
+            const response = await fetch(`https://api.icount.co.il/api/v3.php/reports/income_report`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cid,
+                    user,
+                    pass,
+                    start_date: params.start_date,
+                    end_date: params.end_date,
+                    client_id: params.client_id
+                }),
+            });
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('iCount getIncomeReport Exception:', error);
+            return null;
+        }
+    }
+
+    /**
      * Simple leads to client wrapper
      */
     async createLead(name: string, phone: string, notes: string) {

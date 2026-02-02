@@ -150,3 +150,38 @@ export const icountGetAccountInfoTool = createTool({
         }
     }
 });
+export const icountGetIncomeReportTool = createTool({
+    id: 'icount-get-income-report',
+    description: 'Retrieves an income report from iCount for a specific date range.',
+    inputSchema: z.object({
+        startDate: z.string().describe('Start date in YYYY-MM-DD format'),
+        endDate: z.string().describe('End date in YYYY-MM-DD format'),
+        clientId: z.number().optional().describe('Filter by specific client ID'),
+    }),
+    execute: async ({ startDate, endDate, clientId }) => {
+        try {
+            const report = await icountService.getIncomeReport({
+                start_date: startDate,
+                end_date: endDate,
+                client_id: clientId
+            });
+
+            if (report && report.status) {
+                return {
+                    success: true,
+                    report: report.income_report,
+                };
+            }
+            return {
+                success: false,
+                message: report?.error_description || 'חלה שגיאה בקבלת דוח ההכנסות מ-iCount.'
+            };
+        } catch (error) {
+            console.error('iCount get income report tool error:', error);
+            return {
+                success: false,
+                message: 'חלה שגיאה טכנית בחיבור ל-iCount.'
+            };
+        }
+    }
+});
