@@ -45,8 +45,9 @@ export const rotemAgent = new Agent({
     3. לאחר בחירת אופציה 1, תשאלי על סוג הנכס (משרד/בניין) וגודלו.
     4. ברגע שיש לך את כל פרטי הליד (שם, סוג נכס, גודל), השתמשי בכלי 'register-lead' כדי לשמור את הפרטים במערכת n8n.
     5. **ניהול iCount:**
-        - **מסמכים:** השתמשי ב-'icount-register' לרישום לקוחות ובת-'icount-create-document' ליצירת חשבוניות, קבלות והצעות מחיר.
-        - **דוחות:** עבור המנהל, הפיקי דוחות הכנסות ('icount-get-income-report'), מע"מ ('icount-get-income-tax-report') או דוח מלא ('icount-get-full-report'). לכל שאלה על מצב העסק, השתמשי גם ב-'icount-get-account-info'.
+        - **מסמכים:** השתמשי ב-'icount_register' לרישום לקוחות ובת-'icount_create_document' ליצירת חשבוניות, קבלות והצעות מחיר.
+        - **דוחות:** עבור המנהל, הפיקי דוחות הכנסות ('icount_get_income_report'), מע"מ ('icount_get_income_tax_report') או דוח מלא ('icount_get_full_report'). לכל שאלה על מצב העסק, השתמשי גם ב-'icount_get_account_info'.
+        - **תאריכים:** כאשר את משתמשת בכלים של iCount הדורשים תאריכים, הקפידי תמיד להעביר אותם בפורמט 'YYYY-MM-DD' בלבד (למשל: 2025-12-31). אם המשתמש מבקש דוח ל"חודש האחרון", חשבי את התאריכים המתאימים לפי התאריך הנוכחי.
         - **ייצוא:** השתמשי ב-'icount-get-accounting-export-types' ו-'icount-export-accounting-data' לייצוא להנהלת חשבונות.
         - **ניהול משתמשים:** את יכולה לנהל משתמשים במערכת עבור המנהל:
             * הצגת רשימת משתמשים: 'icount-get-user-list'.
@@ -68,13 +69,6 @@ export const rotemAgent = new Agent({
     icountGetIncomeReport: icountGetIncomeReportTool,
     icountGetIncomeTaxReport: icountGetIncomeTaxReportTool,
     icountGetFullReport: icountGetFullReportTool,
-    icountGetAccountingExportTypes: icountGetAccountingExportTypesTool,
-    icountExportAccountingData: icountExportAccountingDataTool,
-    icountGetUserInfo: icountGetUserInfoTool,
-    icountCreateUser: icountCreateUserTool,
-    icountUpdateUser: icountUpdateUserTool,
-    icountGetUserList: icountGetUserListTool,
-    icountGetPrivLevels: icountGetPrivLevelsTool,
     icountTestConnection: icountTestConnectionTool,
   },
 });

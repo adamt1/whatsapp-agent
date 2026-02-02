@@ -25,7 +25,7 @@ export class ICountService {
 
     constructor() {
         this.apiKey = process.env.ICOUNT_API_KEY || '';
-        this.companyId = process.env.ICOUNT_COMPANY_ID || '';
+        this.companyId = process.env.ICOUNT_COMPANY_ID || process.env.ICOUNT_CID || '';
     }
 
     /**
@@ -124,15 +124,16 @@ export class ICountService {
      * V3 API Internal fetcher helper
      */
     private async v3Fetch(endpoint: string, params: any) {
-        const cid = this.companyId;
+        const cid = this.companyId || process.env.ICOUNT_COMPANY_ID || process.env.ICOUNT_CID || '';
         const user = process.env.ICOUNT_USER || '';
         const pass = process.env.ICOUNT_PASS || '';
 
         if (!cid || !user || !pass) {
+            console.error('iCount V3 Credentials missing', { cid: !!cid, user: !!user, pass: !!pass });
             return {
                 status: false,
                 reason: 'missing_credentials',
-                error_description: 'נא לוודא שכל פרטי ההתחברות (CID, User, Pass) מוגדרים ב-Vercel.'
+                error_description: 'נא לוודא שכל פרטי ההתחברות (CID, User, Pass) מוגדרים במערכת.'
             };
         }
 
@@ -151,6 +152,8 @@ export class ICountService {
             });
 
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`iCount V3 HTTP Error: ${response.status}`, errorText);
                 return {
                     status: false,
                     reason: 'http_error',
@@ -159,6 +162,9 @@ export class ICountService {
             }
 
             const result = await response.json();
+            if (!result.status) {
+                console.warn(`iCount V3 API Error: ${endpoint}`, result.error_description || result.reason);
+            }
             return result;
         } catch (error: any) {
             console.error(`iCount V3 ${endpoint} Fetch Exception:`, error);
