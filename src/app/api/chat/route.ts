@@ -23,21 +23,6 @@ export async function POST(req: NextRequest) {
         }
 
         const rotem = mastra.getAgent('rotemAgent');
-        let memory;
-        try {
-            memory = await rotem.getMemory();
-        } catch (memError: any) {
-            throw new Error(`Mastra GetMemory Error: ${memError.message}`);
-        }
-
-        // Ensure the Postgres tables exist
-        if (memory?.storage && 'init' in memory.storage) {
-            try {
-                await (memory.storage as any).init();
-            } catch (initError: any) {
-                throw new Error(`Mastra Storage Init Error: ${initError.message}`);
-            }
-        }
 
         // Generate reply using Mastra with memory (always do this to keep context)
         let result;
@@ -45,6 +30,7 @@ export async function POST(req: NextRequest) {
         const messageWithContext = `[Sender ID: ${senderId}]\n${message}`;
 
         try {
+            console.log(`Calling Mastra generate for ${chatId}...`);
             result = await rotem.generate(messageWithContext, {
                 memory: {
                     thread: chatId,
@@ -52,6 +38,8 @@ export async function POST(req: NextRequest) {
                 },
             });
         } catch (genError: any) {
+            console.error('Mastra Generate Detailed Error:', genError);
+            // Fallback: If memory/agent fails, we could try a simplified call or just error
             throw new Error(`Mastra Generate Error: ${genError.message}`);
         }
 

@@ -55,7 +55,7 @@ export const rotemAgent = new Agent({
     8. שמרי על תשובות קצרות שמתאימות לוואטסאפ.
     9. בסיום הודעות ארוכות או משמעותיות, את יכולה לחתום: "בברכה, רותם 😊".
   `,
-  model: xai('grok-3'),
+  model: xai('grok-2-1212'),
   memory,
   tools: {
     registerLead: registerLeadTool,
