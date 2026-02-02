@@ -20,12 +20,17 @@ Deno.serve(async (req: Request) => {
         });
 
         // 0. Handle Human Hand-off (Detect manual messages from phone)
-        if (payload.typeWebhook === "outgoingMessageReceived") {
+        if (payload.typeWebhook === "outgoingMessageReceived" || payload.typeWebhook === "outgoingAPIMessageReceived") {
             const chatId = payload.chatId || payload.senderData?.chatId;
             const sendByApi = payload.sendByApi;
+            const typeWebhook = payload.typeWebhook;
 
-            // If a human sends a message manually (not via API)
-            if (sendByApi === false && chatId) {
+            // Manual message detection:
+            // 1. typeWebhook is outgoingMessageReceived AND sendByApi is not true
+            // 2. OR it's outgoingAPIMessageReceived but we want to be safe (actually we only care about manual)
+            const isManual = (typeWebhook === "outgoingMessageReceived" && sendByApi !== true);
+
+            if (isManual && chatId) {
                 console.log(`Human intervention detected in chat: ${chatId}. Pausing Rotem.`);
                 await supabase.from("session_control").upsert({
                     chat_id: chatId,
@@ -35,7 +40,7 @@ Deno.serve(async (req: Request) => {
                 });
 
                 await supabase.from("debug_logs").insert({
-                    payload: { diag: "human-intervention", chatId, reason: "manual-outgoing-message" }
+                    payload: { diag: "human-intervention", chatId, reason: "manual-outgoing-message", typeWebhook, sendByApi }
                 });
             }
         }
@@ -63,18 +68,17 @@ Deno.serve(async (req: Request) => {
                 .eq("chat_id", chatId)
                 .single();
 
+            let isPaused = false;
             if (session && session.is_paused) {
                 const pauseDuration = 6 * 60 * 60 * 1000; // 6 hours
                 const lastHumanAt = new Date(session.last_human_at).getTime();
                 const now = new Date().getTime();
 
                 if (now - lastHumanAt < pauseDuration) {
-                    console.log(`Rotem is paused for ${chatId} due to human intervention.`);
+                    console.log(`Rotem is in background mode for ${chatId} due to human intervention.`);
+                    isPaused = true;
                     await supabase.from("debug_logs").insert({
-                        payload: { diag: "session-paused", chatId, reason: "human-intervention-active" }
-                    });
-                    return new Response(JSON.stringify({ status: "paused_for_human" }), {
-                        headers: { "Content-Type": "application/json" },
+                        payload: { diag: "session-paused-background", chatId, reason: "human-intervention-active" }
                     });
                 } else {
                     // Reset pause after duration expires
@@ -130,7 +134,8 @@ Deno.serve(async (req: Request) => {
                     body: JSON.stringify({
                         message: text,
                         chatId: chatId,
-                        messageType: isAudio ? "audio" : "text"
+                        messageType: isAudio ? "audio" : "text",
+                        isPaused: isPaused
                     })
                 });
 
@@ -143,7 +148,16 @@ Deno.serve(async (req: Request) => {
                 } else {
                     console.log("Forwarded successfully.");
                     await supabase.from("debug_logs").insert({
-                        payload: { diag: "forward-success", to: NEXT_JS_API_URL, from: senderNumber }
+                        payload: {
+                            diag: "forward-success",
+                            to: NEXT_JS_API_URL,
+                            from: senderNumber,
+                            sentPayload: {
+                                message: text,
+                                chatId: chatId,
+                                isPaused: isPaused
+                            }
+                        }
                     });
                 }
             } catch (fetchError: any) {

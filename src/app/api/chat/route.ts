@@ -16,7 +16,7 @@ const elevenlabs = new ElevenLabsClient({
 
 export async function POST(req: NextRequest) {
     try {
-        const { message, chatId, messageType } = await req.json();
+        const { message, chatId, messageType, isPaused } = await req.json();
 
         if (!message || !chatId) {
             return NextResponse.json({ error: 'Missing message or chatId' }, { status: 400 });
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Generate reply using Mastra with memory
+        // Generate reply using Mastra with memory (always do this to keep context)
         let result;
         try {
             result = await rotem.generate(message, {
@@ -54,6 +54,12 @@ export async function POST(req: NextRequest) {
 
         const replyText = result.text;
         console.log(`Generated reply for ${chatId}: ${replyText}`);
+
+        // BACKGROUND MODE: If paused, don't send the reply
+        if (isPaused) {
+            console.log(`Background mode active for ${chatId}. Skipping outgoing message.`);
+            return NextResponse.json({ success: true, mode: 'background', reply: replyText });
+        }
 
         // Decide output: Audio if requested, else Text
         if (messageType === 'audio') {
