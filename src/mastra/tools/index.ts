@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { icountService } from '../../services/icount';
 
 export const registerLeadTool = createTool({
-    id: 'register_lead',
+    id: 'registerlead',
     description: 'Registers a new lead in the CRM (n8n) with property details and contact info.',
     inputSchema: z.object({
         customerName: z.string().describe('The name of the customer'),
@@ -47,7 +47,7 @@ export const registerLeadTool = createTool({
 });
 
 export const icountTool = createTool({
-    id: 'icount_register',
+    id: 'icountregister',
     description: 'Registers a new client or lead in the iCount invoicing system.',
     inputSchema: z.object({
         name: z.string().describe('Full name of the client'),
@@ -86,7 +86,7 @@ export const icountTool = createTool({
 });
 
 export const icountCreateDocumentTool = createTool({
-    id: 'icount_create_document',
+    id: 'icountcreatedocument',
     description: 'Creates an invoice, receipt, or price quote in iCount.',
     inputSchema: z.object({
         doctype: z.enum(['invoice', 'receipt', 'invrec', 'offer', 'deal']).describe('The type of document to create (invoice=חשבונית מס, receipt=קבלה, invrec=חשבונית מס קבלה, offer=הצעת מחיר, deal=חשבון עסקה)'),
@@ -125,7 +125,7 @@ export const icountCreateDocumentTool = createTool({
 });
 
 export const icountGetAccountInfoTool = createTool({
-    id: 'icount_get_account_info',
+    id: 'icountgetaccountinfo',
     description: 'Retrieves account balance and general business info from iCount (used for reports).',
     inputSchema: z.object({}),
     execute: async () => {
@@ -151,7 +151,7 @@ export const icountGetAccountInfoTool = createTool({
     }
 });
 export const icountGetIncomeReportTool = createTool({
-    id: 'icount_get_income_report',
+    id: 'icountgetincomereport',
     description: 'Retrieves an income report from iCount for a date range (YYYY-MM-DD).',
     inputSchema: z.object({
         startDate: z.string().describe('Start date (YYYY-MM-DD)'),
@@ -187,7 +187,7 @@ export const icountGetIncomeReportTool = createTool({
     }
 });
 export const icountGetIncomeTaxReportTool = createTool({
-    id: 'icount_get_income_tax_report',
+    id: 'icountgetincometaxreport',
     description: 'Retrieves an income tax report from iCount for a specific month range.',
     inputSchema: z.object({
         startMonth: z.string().optional().describe('Start month in YYYY-MM format. Defaults to last month.'),
@@ -222,7 +222,7 @@ export const icountGetIncomeTaxReportTool = createTool({
     }
 });
 export const icountGetFullReportTool = createTool({
-    id: 'icount_get_full_report',
+    id: 'icountgetfullreport',
     description: 'Retrieves a full comprehensive report from iCount for a specific date range.',
     inputSchema: z.object({
         startDate: z.string().describe('Start date in YYYY-MM-DD format'),
@@ -513,7 +513,7 @@ export const icountGetPrivLevelsTool = createTool({
 });
 
 export const icountTestConnectionTool = createTool({
-    id: 'icount_test_connection',
+    id: 'icounttestconnection',
     description: 'Tests the connection to iCount and verifies if the credentials are valid.',
     inputSchema: z.object({}),
     execute: async () => {
