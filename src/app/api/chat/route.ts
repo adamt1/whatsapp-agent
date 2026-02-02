@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
         const messageWithContext = `[Sender ID: ${senderId}]\n${message}`;
 
         try {
-            console.log(`Calling Mastra generate for ${chatId}...`);
+            console.log(`[v3.6] Calling Mastra generate for ${chatId}...`);
             result = await rotem.generate(messageWithContext, {
                 memory: {
                     thread: chatId,
@@ -38,16 +38,14 @@ export async function POST(req: NextRequest) {
                 },
             });
         } catch (genError: any) {
-            console.error('Mastra Generate Detailed Error:', genError);
+            console.error('[v3.6] Mastra Generate Detailed Error:', genError);
 
-            // AI SDK errors often have non-enumerable properties. Serialize manually.
             const errorDetails: any = {
                 message: genError.message,
                 name: genError.name,
-                stack: genError.stack,
+                version: 'v3.6',
             };
 
-            // Capture specific AI SDK error details
             if (genError.response) {
                 errorDetails.status = genError.response.status;
                 errorDetails.statusText = genError.response.statusText;
@@ -56,7 +54,17 @@ export async function POST(req: NextRequest) {
                 errorDetails.data = genError.data;
             }
 
-            throw new Error(`Mastra Generate Error: ${genError.message} | Details: ${JSON.stringify(errorDetails)}`);
+            // LOG DIRECTLY TO SUPABASE to ensure we see it
+            await supabase.from('debug_logs').insert({
+                payload: {
+                    diag: 'chat-api-error-v3.6',
+                    chatId,
+                    error: errorDetails,
+                    rawMessage: message
+                }
+            });
+
+            throw new Error(`Mastra Generate Error [v3.6]: ${genError.message}`);
         }
 
         const replyText = result.text;
