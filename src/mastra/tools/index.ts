@@ -89,7 +89,7 @@ export const icountCreateDocumentTool = createTool({
     id: 'icount-create-document',
     description: 'Creates an invoice, receipt, or price quote in iCount.',
     inputSchema: z.object({
-        doctype: z.enum(['invoice', 'receipt', 'invrecp', 'proposal', 'pro_forma']).describe('The type of document to create (invoice=חשבונית מס, receipt=קבלה, invrecp=חשבונית מס קבלה, proposal=הצעת מחיר)'),
+        doctype: z.enum(['invoice', 'receipt', 'invrec', 'offer', 'deal']).describe('The type of document to create (invoice=חשבונית מס, receipt=קבלה, invrec=חשבונית מס קבלה, offer=הצעת מחיר, deal=חשבון עסקה)'),
         clientName: z.string().describe('The name of the client in iCount'),
         email: z.string().optional().describe('Client email to send the document to'),
         items: z.array(z.object({

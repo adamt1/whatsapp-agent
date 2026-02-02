@@ -70,7 +70,7 @@ export class ICountService {
      * Create a document (Invoice, Receipt, Quote, etc.)
      */
     async createDocument(params: {
-        doctype: 'invoice' | 'receipt' | 'invrecp' | 'proposal' | 'pro_forma';
+        doctype: 'invoice' | 'receipt' | 'invrec' | 'offer' | 'deal';
         clientName: string;
         items: ICountItem[];
         email?: string;
