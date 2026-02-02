@@ -1,5 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+import { icountService } from '../../services/icount';
 
 export const registerLeadTool = createTool({
     id: 'register-lead',
@@ -43,4 +44,43 @@ export const registerLeadTool = createTool({
             };
         }
     },
+});
+
+export const icountTool = createTool({
+    id: 'icount-register',
+    description: 'Registers a new client or lead in the iCount invoicing system.',
+    inputSchema: z.object({
+        name: z.string().describe('Full name of the client'),
+        phone: z.string().describe('Phone number of the client'),
+        email: z.string().optional().describe('Email of the client'),
+        notes: z.string().optional().describe('Additional details about the lead/client'),
+    }),
+    execute: async ({ name, phone, email, notes }) => {
+        try {
+            const clientId = await icountService.createClient({
+                name,
+                phone,
+                email,
+                address: notes
+            });
+
+            if (clientId) {
+                return {
+                    success: true,
+                    message: `הלקוח נרשם ב-iCount בהצלחה! (מזהה: ${clientId})`,
+                    clientId
+                };
+            }
+            return {
+                success: false,
+                message: 'חלה שגיאה ברישום הלקוח ב-iCount.'
+            };
+        } catch (error) {
+            console.error('iCount tool error:', error);
+            return {
+                success: false,
+                message: 'חלה שגיאה טכנית בחיבור ל-iCount.'
+            };
+        }
+    }
 });

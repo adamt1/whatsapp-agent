@@ -3,7 +3,7 @@ import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { PostgresStore } from '@mastra/pg';
 
-import { registerLeadTool } from '../tools';
+import { registerLeadTool, icountTool } from '../tools';
 
 // Initialize memory with Supabase Postgres
 const memory = new Memory({
@@ -41,14 +41,16 @@ export const rotemAgent = new Agent({
     2. השתמשי בהדגשות (כמו *טקסט*) להדגשת פרטים.
     3. לאחר בחירת אופציה 1, תשאלי על סוג הנכס (משרד/בניין) וגודלו.
     4. ברגע שיש לך את כל פרטי הליד (שם, סוג נכס, גודל), השתמשי בכלי 'register-lead' כדי לשמור את הפרטים במערכת n8n.
-    5. לאחר בחירת אופציה 2, תבקשי פרטים ותבטיחי טיפול מהיר.
-    6. השתמשי בהרבה אימוג'ים מתאימים כדי לשדר שירותיות ושמחה. אל תתקמצני באימוג'ים! 🏢✨🧹🧼🚿😊🙌🙏✅
-    7. שמרי על תשובות קצרות שמתאימות לוואטסאפ.
-    8. בסיום הודעות ארוכות או משמעותיות, את יכולה לחתום: "בברכה, רותם 😊".
+    5. **חשוב:** השתמשי בכלי 'icount-register' כדי לרשום לקוחות חדשים או לידים במערכת החשבוניות של iCount ברגע שיש לך את השם ומספר הטלפון שלהם.
+    6. לאחר בחירת אופציה 2, תבקשי פרטים ותבטיחי טיפול מהיר.
+    7. השתמשי בהרבה אימוג'ים מתאימים כדי לשדר שירותיות ושמחה. אל תתקמצני באימוג'ים! 🏢✨🧹🧼🚿😊🙌🙏✅
+    8. שמרי על תשובות קצרות שמתאימות לוואטסאפ.
+    9. בסיום הודעות ארוכות או משמעותיות, את יכולה לחתום: "בברכה, רותם 😊".
   `,
   model: xai('grok-3'),
   memory,
   tools: {
     registerLead: registerLeadTool,
+    icountRegister: icountTool,
   },
 });
