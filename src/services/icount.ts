@@ -14,7 +14,8 @@ export interface ICountClient {
 
 export interface ICountItem {
     description: string;
-    unit_price: number;
+    unitprice?: number;
+    unitprice_incvat?: number;
     quantity: number;
 }
 
@@ -92,7 +93,12 @@ export class ICountService {
                     doctype: params.doctype,
                     client_name: params.clientName,
                     email: params.email,
-                    items: params.items,
+                    items: params.items.map(item => ({
+                        description: item.description,
+                        unitprice: item.unitprice,
+                        unitprice_incvat: item.unitprice_incvat,
+                        quantity: item.quantity
+                    })),
                     send_email: !!params.email,
                 }),
             });

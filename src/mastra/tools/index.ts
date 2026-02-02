@@ -94,7 +94,8 @@ export const icountCreateDocumentTool = createTool({
         email: z.string().optional().describe('Client email to send the document to'),
         items: z.array(z.object({
             description: z.string().describe('Item description'),
-            unit_price: z.number().describe('Price per unit (before VAT if applicable)'),
+            unitprice: z.number().optional().describe('Price per unit (before VAT)'),
+            unitprice_incvat: z.number().optional().describe('Price per unit (including VAT)'),
             quantity: z.number().describe('Quantity'),
         })).describe('List of items in the document'),
     }),
