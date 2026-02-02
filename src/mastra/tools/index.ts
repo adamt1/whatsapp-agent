@@ -260,7 +260,7 @@ export const icountGetFullReportTool = createTool({
 });
 
 export const icountGetAccountingExportTypesTool = createTool({
-    id: 'icount-get-accounting-export-types',
+    id: 'icount_get_accounting_export_types',
     description: 'Retrieves available accounting export types from iCount.',
     inputSchema: z.object({}),
     execute: async () => {
@@ -287,7 +287,7 @@ export const icountGetAccountingExportTypesTool = createTool({
 });
 
 export const icountExportAccountingDataTool = createTool({
-    id: 'icount-export-accounting-data',
+    id: 'icount_export_accounting_data',
     description: 'Initiates an accounting data export from iCount to external software.',
     inputSchema: z.object({
         exportType: z.string().describe('The export type (retrieved from get-accounting-export-types)'),
@@ -336,7 +336,7 @@ export const icountExportAccountingDataTool = createTool({
 });
 
 export const icountGetUserInfoTool = createTool({
-    id: 'icount-get-user-info',
+    id: 'icount_get_user_info',
     description: 'Retrieves information about a specific iCount user.',
     inputSchema: z.object({
         userId: z.number().optional().describe('The numeric ID of the user'),
@@ -372,7 +372,7 @@ export const icountGetUserInfoTool = createTool({
 });
 
 export const icountCreateUserTool = createTool({
-    id: 'icount-create-user',
+    id: 'icount_create_user',
     description: 'Creates a new user in iCount.',
     inputSchema: z.object({
         newUser: z.string().describe('The username for the new user'),
@@ -417,7 +417,7 @@ export const icountCreateUserTool = createTool({
 });
 
 export const icountUpdateUserTool = createTool({
-    id: 'icount-update-user',
+    id: 'icount_update_user',
     description: 'Updates an existing iCount user.',
     inputSchema: z.object({
         userId: z.number().describe('The numeric ID of the user to update'),
@@ -459,7 +459,7 @@ export const icountUpdateUserTool = createTool({
 });
 
 export const icountGetUserListTool = createTool({
-    id: 'icount-get-user-list',
+    id: 'icount_get_user_list',
     description: 'Retrieves a list of all iCount users in the company.',
     inputSchema: z.object({}),
     execute: async () => {
@@ -486,7 +486,7 @@ export const icountGetUserListTool = createTool({
 });
 
 export const icountGetPrivLevelsTool = createTool({
-    id: 'icount-get-priv-levels',
+    id: 'icount_get_priv_levels',
     description: 'Retrieves available privilege levels for users in iCount.',
     inputSchema: z.object({}),
     execute: async () => {
@@ -513,7 +513,7 @@ export const icountGetPrivLevelsTool = createTool({
 });
 
 export const icountTestConnectionTool = createTool({
-    id: 'icount-test-connection',
+    id: 'icount_test_connection',
     description: 'Tests the connection to iCount and verifies if the credentials are valid.',
     inputSchema: z.object({}),
     execute: async () => {
