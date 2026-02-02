@@ -185,3 +185,38 @@ export const icountGetIncomeReportTool = createTool({
         }
     }
 });
+export const icountGetIncomeTaxReportTool = createTool({
+    id: 'icount-get-income-tax-report',
+    description: 'Retrieves an income tax report from iCount for a specific month range.',
+    inputSchema: z.object({
+        startMonth: z.string().optional().describe('Start month in YYYY-MM format. Defaults to last month.'),
+        endMonth: z.string().optional().describe('End month in YYYY-MM format. Defaults to last month.'),
+    }),
+    execute: async ({ startMonth, endMonth }) => {
+        try {
+            const report = await icountService.getIncomeTaxReport({
+                start_month: startMonth,
+                end_month: endMonth,
+            });
+
+            if (report && report.status) {
+                return {
+                    success: true,
+                    report: report.income_tax_report,
+                    startMonth: report.start_month,
+                    endMonth: report.end_month,
+                };
+            }
+            return {
+                success: false,
+                message: report?.error_description || 'חלה שגיאה בקבלת דוח המע"מ מ-iCount.'
+            };
+        } catch (error) {
+            console.error('iCount get income tax report tool error:', error);
+            return {
+                success: false,
+                message: 'חלה שגיאה טכנית בחיבור ל-iCount.'
+            };
+        }
+    }
+});

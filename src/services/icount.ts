@@ -184,6 +184,37 @@ export class ICountService {
             address: notes
         });
     }
+
+    /**
+     * Get Income Tax Report for a specific date range
+     */
+    async getIncomeTaxReport(params: { start_month?: string; end_month?: string }) {
+        const cid = this.companyId;
+        const user = process.env.ICOUNT_USER || '';
+        const pass = process.env.ICOUNT_PASS || '';
+
+        try {
+            const response = await fetch(`https://api.icount.co.il/api/v3.php/reports/income_tax_report`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cid,
+                    user,
+                    pass,
+                    start_month: params.start_month,
+                    end_month: params.end_month,
+                }),
+            });
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('iCount getIncomeTaxReport Exception:', error);
+            return null;
+        }
+    }
 }
 
 export const icountService = new ICountService();

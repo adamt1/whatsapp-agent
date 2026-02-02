@@ -3,7 +3,7 @@ import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { PostgresStore } from '@mastra/pg';
 
-import { registerLeadTool, icountTool, icountCreateDocumentTool, icountGetAccountInfoTool, icountGetIncomeReportTool } from '../tools';
+import { registerLeadTool, icountTool, icountCreateDocumentTool, icountGetAccountInfoTool, icountGetIncomeReportTool, icountGetIncomeTaxReportTool } from '../tools';
 
 // Initialize memory with Supabase Postgres
 const memory = new Memory({
@@ -48,7 +48,7 @@ export const rotemAgent = new Agent({
             *   **למשרדים:** השתמשי בתיאור: "הסכם התקשרות עבור שירותי ניקיון למשרדים". הוסיפי שורות פירוט: "ניקיון פעמיים בשבוע (שעתיים בכל פעם)", "כולל חומרי ניקיון וציוד", "פירוט: טאטוא, שטיפה, ריקון פחים, אבק, שטיפת כלים, ניקיון מטבחון ושירותים".
             *   **לבניינים:** השתמשי בתיאור: "הסכם התקשרות עבור שירותי ניקיון לבניין". הוסיפי שורות פירוט: "ניקיון 3 פעמים בשבוע (ראשון, שלישי, חמישי)", "פירוט: שטיפת לוביים ומדרגות, ניקיון שירותים, חלונות, מעלית וסביבת הבניין".
         - ודאי תמיד שיש לך את שם הלקוח המדויק והמחיר המוסכם לפני יצירת המסמך.
-        - אם מנהל (Admin) מבקש דוח הכנסות או מכירות, השתמשי ב-'icount-get-income-report' עם טווח התאריכים המתאים. למידע כללי על החשבון, השתמשי ב-'icount-get-account-info'.
+        - אם מנהל (Admin) מבקש דוח הכנסות או מכירות, השתמשי ב-'icount-get-income-report'. אם הוא מבקש דוח מע"מ (Income Tax Report), השתמשי ב-'icount-get-income-tax-report'.
     6. לאחר בחירת אופציה 2, תבקשי פרטים ותבטיחי טיפול מהיר.
     7. השתמשי בהרבה אימוג'ים מתאימים כדי לשדר שירותיות ושמחה. אל תתקמצני באימוג'ים! 🏢✨🧹🧼🚿😊🙌🙏✅
     8. שמרי על תשובות קצרות שמתאימות לוואטסאפ.
@@ -62,5 +62,6 @@ export const rotemAgent = new Agent({
     icountCreateDocument: icountCreateDocumentTool,
     icountGetAccountInfo: icountGetAccountInfoTool,
     icountGetIncomeReport: icountGetIncomeReportTool,
+    icountGetIncomeTaxReport: icountGetIncomeTaxReportTool,
   },
 });
