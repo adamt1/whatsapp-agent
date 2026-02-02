@@ -1,4 +1,7 @@
-import { xai } from '@ai-sdk/xai';
+import { createXai } from '@ai-sdk/xai';
+const xai = createXai({
+  apiKey: process.env.XAI_API_KEY,
+});
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { PostgresStore } from '@mastra/pg';
