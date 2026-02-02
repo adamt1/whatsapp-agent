@@ -43,22 +43,27 @@ export async function POST(req: NextRequest) {
             const errorDetails: any = {
                 message: genError.message,
                 name: genError.name,
+                stack: genError.stack,
             };
 
+            // Attempt to extract more info from the AI SDK error
             if (genError.response) {
                 errorDetails.status = genError.response.status;
                 errorDetails.statusText = genError.response.statusText;
             }
-            if (genError.data) {
-                errorDetails.data = genError.data;
-            }
+
+            // Log full error string for debugging
+            console.error('JSON Error:', JSON.stringify(genError, null, 2));
 
             // Keep the direct Supabase logging as it is very helpful for production
             await supabase.from('debug_logs').insert({
                 payload: {
                     diag: 'chat-api-error',
                     chatId,
-                    error: errorDetails,
+                    error: {
+                        ...errorDetails,
+                        raw: JSON.parse(JSON.stringify(genError)) // Try to capture everything
+                    },
                     rawMessage: message
                 }
             });
