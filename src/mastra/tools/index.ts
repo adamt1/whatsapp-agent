@@ -84,3 +84,68 @@ export const icountTool = createTool({
         }
     }
 });
+
+export const icountCreateDocumentTool = createTool({
+    id: 'icount-create-document',
+    description: 'Creates an invoice, receipt, or price quote in iCount.',
+    inputSchema: z.object({
+        doctype: z.enum(['invoice', 'receipt', 'invrecp', 'proposal', 'pro_forma']).describe('The type of document to create (invoice=חשבונית מס, receipt=קבלה, invrecp=חשבונית מס קבלה, proposal=הצעת מחיר)'),
+        clientName: z.string().describe('The name of the client in iCount'),
+        email: z.string().optional().describe('Client email to send the document to'),
+        items: z.array(z.object({
+            description: z.string().describe('Item description'),
+            unit_price: z.number().describe('Price per unit (before VAT if applicable)'),
+            quantity: z.number().describe('Quantity'),
+        })).describe('List of items in the document'),
+    }),
+    execute: async (args) => {
+        try {
+            const result = await icountService.createDocument(args);
+            if (result) {
+                return {
+                    success: true,
+                    message: `המסמך (${args.doctype}) נוצר בהצלחה!`,
+                    docId: result.docId,
+                    docUrl: result.docUrl,
+                };
+            }
+            return {
+                success: false,
+                message: 'חלה שגיאה ביצירת המסמך ב-iCount.'
+            };
+        } catch (error) {
+            console.error('iCount create doc tool error:', error);
+            return {
+                success: false,
+                message: 'חלה שגיאה טכנית ביצירת המסמך.'
+            };
+        }
+    }
+});
+
+export const icountGetAccountInfoTool = createTool({
+    id: 'icount-get-account-info',
+    description: 'Retrieves account balance and general business info from iCount (used for reports).',
+    inputSchema: z.object({}),
+    execute: async () => {
+        try {
+            const info = await icountService.getAccountInfo();
+            if (info) {
+                return {
+                    success: true,
+                    info,
+                };
+            }
+            return {
+                success: false,
+                message: 'לא ניתן היה לקבל את נתוני החשבון מ-iCount.'
+            };
+        } catch (error) {
+            console.error('iCount get info tool error:', error);
+            return {
+                success: false,
+                message: 'חלה שגיאה טכנית בחיבור ל-iCount.'
+            };
+        }
+    }
+});

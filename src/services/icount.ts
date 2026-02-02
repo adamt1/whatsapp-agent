@@ -12,6 +12,12 @@ export interface ICountClient {
     address?: string;
 }
 
+export interface ICountItem {
+    description: string;
+    unit_price: number;
+    quantity: number;
+}
+
 export class ICountService {
     private apiKey: string;
     private companyId: string;
@@ -61,8 +67,71 @@ export class ICountService {
     }
 
     /**
-     * Create a lead (if iCount supports leads via specialized API)
-     * For iCount, clients can often be used as leads.
+     * Create a document (Invoice, Receipt, Quote, etc.)
+     */
+    async createDocument(params: {
+        doctype: 'invoice' | 'receipt' | 'invrecp' | 'proposal' | 'pro_forma';
+        clientName: string;
+        items: ICountItem[];
+        email?: string;
+    }) {
+        if (!this.apiKey || !this.companyId) {
+            console.error('iCount credentials missing');
+            return null;
+        }
+
+        try {
+            const response = await fetch(`${ICOUNT_API_URL}/doc/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cid: this.companyId,
+                    key: this.apiKey,
+                    doctype: params.doctype,
+                    client_name: params.clientName,
+                    email: params.email,
+                    items: params.items,
+                    send_email: !!params.email,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                return {
+                    docId: result.doc_id,
+                    docUrl: result.doc_url,
+                };
+            } else {
+                console.error('iCount Doc Creation Error:', result.reason || result.message);
+                return null;
+            }
+        } catch (error) {
+            console.error('iCount Doc Fetch Exception:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Get a simple report (Sales/Balance)
+     * For V3, we use /account/info or search documents as a workaround if direct reports are restricted.
+     */
+    async getAccountInfo() {
+        if (!this.apiKey || !this.companyId) return null;
+
+        try {
+            const response = await fetch(`https://sl.icount.co.il/api/account?key=${this.apiKey}&cid=${this.companyId}`);
+            return await response.json();
+        } catch (error) {
+            console.error('iCount Report Error:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Simple leads to client wrapper
      */
     async createLead(name: string, phone: string, notes: string) {
         return this.createClient({
