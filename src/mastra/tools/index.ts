@@ -333,3 +333,207 @@ export const icountExportAccountingDataTool = createTool({
         }
     }
 });
+
+export const icountGetUserInfoTool = createTool({
+    id: 'icount-get-user-info',
+    description: 'Retrieves information about a specific iCount user.',
+    inputSchema: z.object({
+        userId: z.number().optional().describe('The numeric ID of the user'),
+        username: z.string().optional().describe('The username of the user'),
+        userEmail: z.string().email().optional().describe('The email address of the user'),
+    }),
+    execute: async (params) => {
+        try {
+            const result = await icountService.getUserInfo({
+                user_id: params.userId,
+                username: params.username,
+                user_email: params.userEmail,
+            });
+
+            if (result && result.status) {
+                return {
+                    success: true,
+                    user: result.user_info,
+                };
+            }
+            return {
+                success: false,
+                message: result?.error_description || 'חלה שגיאה בקבלת פרטי המשתמש מ-iCount.'
+            };
+        } catch (error) {
+            console.error('iCount get user info tool error:', error);
+            return {
+                success: false,
+                message: 'חלה שגיאה טכנית בחיבור ל-iCount.'
+            };
+        }
+    }
+});
+
+export const icountCreateUserTool = createTool({
+    id: 'icount-create-user',
+    description: 'Creates a new user in iCount.',
+    inputSchema: z.object({
+        newUser: z.string().describe('The username for the new user'),
+        newPass: z.string().describe('The password for the new user'),
+        firstName: z.string().describe('First name of the user'),
+        lastName: z.string().describe('Last name of the user'),
+        email: z.string().email().describe('Email address of the user'),
+        mobile: z.string().optional().describe('Mobile phone number'),
+        privLevel: z.number().optional().describe('Privilege level ID (retrieved from get-priv-levels)'),
+    }),
+    execute: async (params) => {
+        try {
+            const result = await icountService.createUser({
+                new_user: params.newUser,
+                new_pass: params.newPass,
+                first_name: params.firstName,
+                last_name: params.lastName,
+                email: params.email,
+                mobile: params.mobile,
+                priv_level: params.privLevel,
+            });
+
+            if (result && result.status) {
+                return {
+                    success: true,
+                    message: `המשתמש ${params.newUser} נוצר בהצלחה.`,
+                    userId: result.user_id,
+                };
+            }
+            return {
+                success: false,
+                message: result?.error_description || 'חלה שגיאה ביצירת המשתמש ב-iCount.'
+            };
+        } catch (error) {
+            console.error('iCount create user tool error:', error);
+            return {
+                success: false,
+                message: 'חלה שגיאה טכנית בחיבור ל-iCount.'
+            };
+        }
+    }
+});
+
+export const icountUpdateUserTool = createTool({
+    id: 'icount-update-user',
+    description: 'Updates an existing iCount user.',
+    inputSchema: z.object({
+        userId: z.number().describe('The numeric ID of the user to update'),
+        firstName: z.string().optional().describe('Updated first name'),
+        lastName: z.string().optional().describe('Updated last name'),
+        email: z.string().email().optional().describe('Updated email address'),
+        mobile: z.string().optional().describe('Updated mobile number'),
+        privLevel: z.number().optional().describe('Updated privilege level'),
+    }),
+    execute: async (params) => {
+        try {
+            const result = await icountService.updateUser({
+                user_id: params.userId,
+                first_name: params.firstName,
+                last_name: params.lastName,
+                email: params.email,
+                mobile: params.mobile,
+                priv_level: params.privLevel,
+            });
+
+            if (result && result.status) {
+                return {
+                    success: true,
+                    message: 'פרטי המשתמש עודכנו בהצלחה.',
+                };
+            }
+            return {
+                success: false,
+                message: result?.error_description || 'חלה שגיאה בעדכון המשתמש ב-iCount.'
+            };
+        } catch (error) {
+            console.error('iCount update user tool error:', error);
+            return {
+                success: false,
+                message: 'חלה שגיאה טכנית בחיבור ל-iCount.'
+            };
+        }
+    }
+});
+
+export const icountGetUserListTool = createTool({
+    id: 'icount-get-user-list',
+    description: 'Retrieves a list of all iCount users in the company.',
+    inputSchema: z.object({}),
+    execute: async () => {
+        try {
+            const result = await icountService.getUserList('array');
+            if (result && result.status) {
+                return {
+                    success: true,
+                    users: result.users,
+                };
+            }
+            return {
+                success: false,
+                message: result?.error_description || 'חלה שגיאה בקבלת רשימת המשתמשים מ-iCount.'
+            };
+        } catch (error) {
+            console.error('iCount get user list tool error:', error);
+            return {
+                success: false,
+                message: 'חלה שגיאה טכנית בחיבור ל-iCount.'
+            };
+        }
+    }
+});
+
+export const icountGetPrivLevelsTool = createTool({
+    id: 'icount-get-priv-levels',
+    description: 'Retrieves available privilege levels for users in iCount.',
+    inputSchema: z.object({}),
+    execute: async () => {
+        try {
+            const result = await icountService.getPrivLevels('array');
+            if (result && result.status) {
+                return {
+                    success: true,
+                    privLevels: result.priv_levels,
+                };
+            }
+            return {
+                success: false,
+                message: result?.error_description || 'חלה שגיאה בקבלת דרגות ההרשאה מ-iCount.'
+            };
+        } catch (error) {
+            console.error('iCount get priv levels tool error:', error);
+            return {
+                success: false,
+                message: 'חלה שגיאה טכנית בחיבור ל-iCount.'
+            };
+        }
+    }
+});
+
+export const icountTestConnectionTool = createTool({
+    id: 'icount-test-connection',
+    description: 'Tests the connection to iCount and verifies if the credentials are valid.',
+    inputSchema: z.object({}),
+    execute: async () => {
+        try {
+            const result = await icountService.testConnection();
+            if (result && result.status) {
+                return {
+                    success: true,
+                    message: 'החיבור ל-iCount תקין! המערכת זיהתה אותך כמשתמש: ' + result.user_info?.full_name,
+                };
+            }
+            return {
+                success: false,
+                message: result?.error_description || 'החיבור ל-iCount נכשל. נא לוודא את ה-Environment Variables ב-Vercel.'
+            };
+        } catch (error) {
+            console.error('iCount test connection tool error:', error);
+            return {
+                success: false,
+                message: 'חלה שגיאה טכנית בבדיקת החיבור ל-iCount.'
+            };
+        }
+    }
+});

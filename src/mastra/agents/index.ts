@@ -3,7 +3,7 @@ import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { PostgresStore } from '@mastra/pg';
 
-import { registerLeadTool, icountTool, icountCreateDocumentTool, icountGetAccountInfoTool, icountGetIncomeReportTool, icountGetIncomeTaxReportTool, icountGetFullReportTool, icountGetAccountingExportTypesTool, icountExportAccountingDataTool } from '../tools';
+import { registerLeadTool, icountTool, icountCreateDocumentTool, icountGetAccountInfoTool, icountGetIncomeReportTool, icountGetIncomeTaxReportTool, icountGetFullReportTool, icountGetAccountingExportTypesTool, icountExportAccountingDataTool, icountGetUserInfoTool, icountCreateUserTool, icountUpdateUserTool, icountGetUserListTool, icountGetPrivLevelsTool, icountTestConnectionTool } from '../tools';
 
 // Initialize memory with Supabase Postgres
 const memory = new Memory({
@@ -41,15 +41,15 @@ export const rotemAgent = new Agent({
     2. השתמשי בהדגשות (כמו *טקסט*) להדגשת פרטים.
     3. לאחר בחירת אופציה 1, תשאלי על סוג הנכס (משרד/בניין) וגודלו.
     4. ברגע שיש לך את כל פרטי הליד (שם, סוג נכס, גודל), השתמשי בכלי 'register-lead' כדי לשמור את הפרטים במערכת n8n.
-    5. **ניהול מסמכים ב-iCount:**
-        - השתמשי ב-'icount-register' לרישום לקוחות חדשים.
-        - השתמשי ב-'icount-create-document' ליצירת מסמכים (invoice=חשבונית מס, receipt=קבלה, invrec=חשבונית מס קבלה, offer=הצעת מחיר, deal=חשבון עסקה).
-        - **תבניות להצעות מחיר (Offer):**
-            *   **למשרדים:** השתמשי בתיאור: "הסכם התקשרות עבור שירותי ניקיון למשרדים". הוסיפי שורות פירוט: "ניקיון פעמיים בשבוע (שעתיים בכל פעם)", "כולל חומרי ניקיון וציוד", "פירוט: טאטוא, שטיפה, ריקון פחים, אבק, שטיפת כלים, ניקיון מטבחון ושירותים".
-            *   **לבניינים:** השתמשי בתיאור: "הסכם התקשרות עבור שירותי ניקיון לבניין". הוסיפי שורות פירוט: "ניקיון 3 פעמים בשבוע (ראשון, שלישי, חמישי)", "פירוט: שטיפת לוביים ומדרגות, ניקיון שירותים, חלונות, מעלית וסביבת הבניין".
-        - ודאי תמיד שיש לך את שם הלקוח המדויק והמחיר המוסכם לפני יצירת המסמך.
-        - אם מנהל (Admin) מבקש דוח הכנסות או מכירות, השתמשי ב-'icount-get-income-report'. אם הוא מבקש דוח מע"מ (Income Tax Report), השתמשי ב-'icount-get-income-tax-report'. דוח מלא ומפורט ניתן להפיק עם 'icount-get-full-report'.
-        - לייצוא נתונים לתוכנת הנהלת חשבונות חיצונית, השתמשי ב-'icount-get-accounting-export-types' כדי לראות סוגים זמינים ואז ב-'icount-export-accounting-data' כדי לבצע את הייצוא.
+    5. **ניהול iCount:**
+        - **מסמכים:** השתמשי ב-'icount-register' לרישום לקוחות ובת-'icount-create-document' ליצירת חשבוניות, קבלות והצעות מחיר.
+        - **דוחות:** עבור המנהל, הפיקי דוחות הכנסות ('icount-get-income-report'), מע"מ ('icount-get-income-tax-report') או דוח מלא ('icount-get-full-report'). לכל שאלה על מצב העסק, השתמשי גם ב-'icount-get-account-info'.
+        - **ייצוא:** השתמשי ב-'icount-get-accounting-export-types' ו-'icount-export-accounting-data' לייצוא להנהלת חשבונות.
+        - **ניהול משתמשים:** את יכולה לנהל משתמשים במערכת עבור המנהל:
+            * הצגת רשימת משתמשים: 'icount-get-user-list'.
+            * פרטי משתמש ספציפי: 'icount-get-user-info'.
+            * יצירת משתמש חדש: 'icount-create-user' (השתמשי ב-'icount-get-priv-levels' כדי לראות דרגות הרשאה זמינות).
+            * עדכון משתמש קיים: 'icount-update-user'.
     6. לאחר בחירת אופציה 2, תבקשי פרטים ותבטיחי טיפול מהיר.
     7. השתמשי בהרבה אימוג'ים מתאימים כדי לשדר שירותיות ושמחה. אל תתקמצני באימוג'ים! 🏢✨🧹🧼🚿😊🙌🙏✅
     8. שמרי על תשובות קצרות שמתאימות לוואטסאפ.
@@ -67,5 +67,11 @@ export const rotemAgent = new Agent({
     icountGetFullReport: icountGetFullReportTool,
     icountGetAccountingExportTypes: icountGetAccountingExportTypesTool,
     icountExportAccountingData: icountExportAccountingDataTool,
+    icountGetUserInfo: icountGetUserInfoTool,
+    icountCreateUser: icountCreateUserTool,
+    icountUpdateUser: icountUpdateUserTool,
+    icountGetUserList: icountGetUserListTool,
+    icountGetPrivLevels: icountGetPrivLevelsTool,
+    icountTestConnection: icountTestConnectionTool,
   },
 });

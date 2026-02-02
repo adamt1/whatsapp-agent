@@ -121,6 +121,63 @@ export class ICountService {
     }
 
     /**
+     * V3 API Internal fetcher helper
+     */
+    private async v3Fetch(endpoint: string, params: any) {
+        const cid = this.companyId;
+        const user = process.env.ICOUNT_USER || '';
+        const pass = process.env.ICOUNT_PASS || '';
+
+        if (!cid || !user || !pass) {
+            return {
+                status: false,
+                reason: 'missing_credentials',
+                error_description: 'נא לוודא שכל פרטי ההתחברות (CID, User, Pass) מוגדרים ב-Vercel.'
+            };
+        }
+
+        try {
+            const response = await fetch(`https://api.icount.co.il/api/v3.php/${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cid,
+                    user,
+                    pass,
+                    ...params
+                }),
+            });
+
+            if (!response.ok) {
+                return {
+                    status: false,
+                    reason: 'http_error',
+                    error_description: `שגיאת תקשורת מול iCount: ${response.status} ${response.statusText}`
+                };
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error: any) {
+            console.error(`iCount V3 ${endpoint} Fetch Exception:`, error);
+            return {
+                status: false,
+                reason: 'exception',
+                error_description: `חלה שגיאה טכנית בפנייה ל-iCount: ${error.message}`
+            };
+        }
+    }
+
+    /**
+     * Test connection to iCount
+     */
+    async testConnection() {
+        return this.v3Fetch('user/info', { username: process.env.ICOUNT_USER });
+    }
+
+    /**
      * Get a simple report (Sales/Balance)
      * For V3, we use /account/info or search documents as a workaround if direct reports are restricted.
      */
@@ -140,38 +197,7 @@ export class ICountService {
      * Get Income Report for a specific date range
      */
     async getIncomeReport(params: { start_date: string; end_date: string; client_id?: number }) {
-        if (!this.apiKey || !this.companyId) {
-            const user = process.env.ICOUNT_USER || '';
-            const pass = process.env.ICOUNT_PASS || '';
-            if (!user || !pass) return null;
-        }
-
-        const cid = this.companyId;
-        const user = process.env.ICOUNT_USER || '';
-        const pass = process.env.ICOUNT_PASS || '';
-
-        try {
-            const response = await fetch(`https://api.icount.co.il/api/v3.php/reports/income_report`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    cid,
-                    user,
-                    pass,
-                    start_date: params.start_date,
-                    end_date: params.end_date,
-                    client_id: params.client_id
-                }),
-            });
-
-            const result = await response.json();
-            return result;
-        } catch (error) {
-            console.error('iCount getIncomeReport Exception:', error);
-            return null;
-        }
+        return this.v3Fetch('reports/income_report', params);
     }
 
     /**
@@ -189,86 +215,21 @@ export class ICountService {
      * Get Income Tax Report for a specific date range
      */
     async getIncomeTaxReport(params: { start_month?: string; end_month?: string }) {
-        const cid = this.companyId;
-        const user = process.env.ICOUNT_USER || '';
-        const pass = process.env.ICOUNT_PASS || '';
-
-        try {
-            const response = await fetch(`https://api.icount.co.il/api/v3.php/reports/income_tax_report`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    cid,
-                    user,
-                    pass,
-                    start_month: params.start_month,
-                    end_month: params.end_month,
-                }),
-            });
-
-            const result = await response.json();
-            return result;
-        } catch (error) {
-            console.error('iCount getIncomeTaxReport Exception:', error);
-            return null;
-        }
+        return this.v3Fetch('reports/income_tax_report', params);
     }
+
     /**
      * Get Full Report for a specific date range
      */
     async getFullReport(params: { start_date: string; end_date: string; email?: string }) {
-        const cid = this.companyId;
-        const user = process.env.ICOUNT_USER || '';
-        const pass = process.env.ICOUNT_PASS || '';
-
-        try {
-            const response = await fetch(`https://api.icount.co.il/api/v3.php/reports/full_report`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    cid,
-                    user,
-                    pass,
-                    start_date: params.start_date,
-                    end_date: params.end_date,
-                    email: params.email,
-                }),
-            });
-
-            const result = await response.json();
-            return result;
-        } catch (error) {
-            console.error('iCount getFullReport Exception:', error);
-            return null;
-        }
+        return this.v3Fetch('reports/full_report', params);
     }
+
     /**
      * Get available accounting export types
      */
     async getAccountingExportTypes() {
-        const cid = this.companyId;
-        const user = process.env.ICOUNT_USER || '';
-        const pass = process.env.ICOUNT_PASS || '';
-
-        try {
-            const response = await fetch(`https://api.icount.co.il/api/v3.php/export/accounting_export_types`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ cid, user, pass }),
-            });
-
-            const result = await response.json();
-            return result;
-        } catch (error) {
-            console.error('iCount getAccountingExportTypes Exception:', error);
-            return null;
-        }
+        return this.v3Fetch('export/accounting_export_types', {});
     }
 
     /**
@@ -285,38 +246,102 @@ export class ICountService {
         webhook_url?: string;
         webhook_method?: 'JSON' | 'POST' | 'GET';
     }) {
-        const cid = this.companyId;
-        const user = process.env.ICOUNT_USER || '';
-        const pass = process.env.ICOUNT_PASS || '';
+        return this.v3Fetch('export/accounting_data', params);
+    }
 
-        try {
-            const response = await fetch(`https://api.icount.co.il/api/v3.php/export/accounting_data`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    cid,
-                    user,
-                    pass,
-                    export_type: params.export_type,
-                    start_date: params.start_date,
-                    end_date: params.end_date,
-                    export_docs: params.export_docs ?? true,
-                    export_expenses: params.export_expenses ?? false,
-                    export_clients: params.export_clients ?? false,
-                    export_suppliers: params.export_suppliers ?? false,
-                    webhook_url: params.webhook_url,
-                    webhook_method: params.webhook_method ?? 'JSON',
-                }),
-            });
+    /**
+     * Get user info
+     */
+    async getUserInfo(params: { user_id?: number; username?: string; user_email?: string }) {
+        return this.v3Fetch('user/info', params);
+    }
 
-            const result = await response.json();
-            return result;
-        } catch (error) {
-            console.error('iCount exportAccountingData Exception:', error);
-            return null;
-        }
+    /**
+     * Create a new user
+     */
+    async createUser(params: {
+        new_user: string;
+        new_pass: string;
+        first_name: string;
+        last_name: string;
+        email: string;
+        first_name_en?: string;
+        last_name_en?: string;
+        mobile?: string;
+        phone?: string;
+        address?: string;
+        priv_level?: number;
+        privs?: Record<string, boolean>;
+    }) {
+        return this.v3Fetch('user/create', params);
+    }
+
+    /**
+     * Update user information
+     */
+    async updateUser(params: {
+        user_id: number;
+        first_name?: string;
+        last_name?: string;
+        first_name_en?: string;
+        last_name_en?: string;
+        email?: string;
+        mobile?: string;
+        phone?: string;
+        address?: string;
+        priv_level?: number;
+        privs?: Record<string, boolean>;
+    }) {
+        return this.v3Fetch('user/update', params);
+    }
+
+    /**
+     * Delete user (deactivate)
+     */
+    async deleteUser(userId: number) {
+        return this.v3Fetch('user/delete', { user_id: userId });
+    }
+
+    /**
+     * Undelete user (reactivate)
+     */
+    async undeleteUser(userId: number) {
+        return this.v3Fetch('user/undelete', { user_id: userId });
+    }
+
+    /**
+     * Get users list
+     */
+    async getUserList(listType: 'array' | 'object' = 'object') {
+        return this.v3Fetch('user/get_list', { list_type: listType });
+    }
+
+    /**
+     * Get user privilege levels
+     */
+    async getPrivLevels(listType: 'array' | 'object' = 'object') {
+        return this.v3Fetch('user/priv_levels', { list_type: listType });
+    }
+
+    /**
+     * Get Password Policy
+     */
+    async getPasswordPolicy() {
+        return this.v3Fetch('user/password_policy', {});
+    }
+
+    /**
+     * Upload user profile image
+     */
+    async uploadProfileImage(profileImage: string) {
+        return this.v3Fetch('user/upload_profile_image', { profile_image: profileImage });
+    }
+
+    /**
+     * Delete user profile image
+     */
+    async deleteProfileImage() {
+        return this.v3Fetch('user/delete_profile_image', {});
     }
 }
 
