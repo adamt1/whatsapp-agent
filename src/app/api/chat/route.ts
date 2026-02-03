@@ -101,10 +101,6 @@ export async function POST(req: NextRequest) {
                     thread: chatId,
                     resource: chatId,
                 },
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                requestContext: {
-                    now: nowInIsrael
-                } as any
             });
         } catch (genError: unknown) {
             const error = genError as Error & { response?: { status: number, statusText: string } };
