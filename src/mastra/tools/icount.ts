@@ -33,11 +33,12 @@ export const createQuoteTool = createTool({
                 message: `הצעת מחיר מספר ${result.docnum} נוצרה בהצלחה עבור ${clientName}.`,
                 docUrl: result.doc_url,
             };
-        } catch (error: any) {
-            console.error('iCount createQuote error:', error);
+        } catch (error: unknown) {
+            const err = error as Error;
+            console.error('iCount error:', err);
             return {
                 success: false,
-                message: `שגיאה ביצירת הצעת מחיר: ${error.message}`,
+                message: `שגיאה: ${err.message}`,
             };
         }
     },
@@ -59,11 +60,12 @@ export const getIncomeReportTool = createTool({
                 summary: result.summary || 'לא נמצא סיכום בדוח',
                 message: `דוח הכנסות לתקופה ${startMonth} עד ${endMonth} התקבל.`,
             };
-        } catch (error: any) {
-            console.error('iCount getIncomeReport error:', error);
+        } catch (error: unknown) {
+            const err = error as Error;
+            console.error('iCount error:', err);
             return {
                 success: false,
-                message: `שגיאה בהפקת דוח הכנסות: ${error.message}`,
+                message: `שגיאה: ${err.message}`,
             };
         }
     },
@@ -84,11 +86,12 @@ export const searchInventoryTool = createTool({
                 items: (result.items || []).slice(0, 10),
                 message: `נמצאו ${result.items?.length || 0} פריטים. מציג את 10 הראשונים.`,
             };
-        } catch (error: any) {
-            console.error('iCount searchInventory error:', error);
+        } catch (error: unknown) {
+            const err = error as Error;
+            console.error('iCount error:', err);
             return {
                 success: false,
-                message: `שגיאה בחיפוש במלאי: ${error.message}`,
+                message: `שגיאה: ${err.message}`,
             };
         }
     },
@@ -126,11 +129,12 @@ export const getLastInvoiceTool = createTool({
                 },
                 message: `המסמך האחרון (${docType}) הוא מספר ${doc.docnum} על סך ${doc.total} ש"ח.`,
             };
-        } catch (error: any) {
-            console.error('iCount getLastInvoice error:', error);
+        } catch (error: unknown) {
+            const err = error as Error;
+            console.error('iCount error:', err);
             return {
                 success: false,
-                message: `שגיאה במשיכת מסמך אחרון: ${error.message}`,
+                message: `שגיאה: ${err.message}`,
             };
         }
     },
@@ -171,11 +175,12 @@ export const getProfitabilityReportTool = createTool({
                 data: chart,
                 message: summary || 'דוח רווחיות התקבל בהצלחה.',
             };
-        } catch (error: any) {
-            console.error('iCount profitability error:', error);
+        } catch (error: unknown) {
+            const err = error as Error;
+            console.error('iCount error:', err);
             return {
                 success: false,
-                message: `שגיאה במשיכת דוח רווחיות: ${error.message}`,
+                message: `שגיאה: ${err.message}`,
             };
         }
     },

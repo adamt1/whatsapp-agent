@@ -4,9 +4,9 @@ import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { supabase } from '@/services/supabase';
 import { greenApi } from '@/services/greenApi';
 
-const GREEN_API_URL = process.env.NEXT_PUBLIC_GREEN_API_URL;
-const ID_INSTANCE = process.env.NEXT_PUBLIC_GREEN_API_ID_INSTANCE;
-const API_TOKEN = process.env.NEXT_PUBLIC_GREEN_API_TOKEN_INSTANCE;
+// const GREEN_API_URL = process.env.NEXT_PUBLIC_GREEN_API_URL;
+// const ID_INSTANCE = process.env.NEXT_PUBLIC_GREEN_API_ID_INSTANCE;
+// const API_TOKEN = process.env.NEXT_PUBLIC_GREEN_API_TOKEN_INSTANCE;
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb';
 
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
                 const audioBlob = await audioRes.blob();
 
                 console.log(`Transcribing audio with ElevenLabs [scribe_v2]...`);
-                // @ts-ignore
+                // @ts-expect-error - ElevenLabs SDK types might be missing scribe_v2
                 const transcription = await elevenlabs.speechToText.convert({
                     file: audioBlob,
                     modelId: "scribe_v2",
@@ -49,15 +49,13 @@ export async function POST(req: NextRequest) {
                 });
 
                 if ('text' in transcription) {
-                    // @ts-ignore
-                    incomingText = transcription.text;
+                    incomingText = (transcription as unknown as { text: string }).text;
                 } else if ('transcripts' in transcription) {
-                    // @ts-ignore
-                    incomingText = transcription.transcripts.map((t: any) => t.text).join(' ');
+                    incomingText = (transcription as unknown as { transcripts: Array<{ text: string }> }).transcripts.map((t) => t.text).join(' ');
                 }
 
                 console.log(`Transcribed text: ${incomingText}`);
-            } catch (sttError: any) {
+            } catch (sttError: unknown) {
                 console.error('STT Error:', sttError);
                 // Fallback to placeholder if transcription fails
                 incomingText = message || "שלחת לי הודעה קולית (נכשלה המרת הטקסט)";
@@ -107,23 +105,25 @@ export async function POST(req: NextRequest) {
                     thread: chatId,
                     resource: chatId,
                 },
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 requestContext: {
                     now: nowInIsrael
                 } as any
             });
-        } catch (genError: any) {
-            console.error('Mastra Generate Detailed Error:', genError);
+        } catch (genError: unknown) {
+            const error = genError as Error & { response?: { status: number, statusText: string } };
+            console.error('Mastra Generate Detailed Error:', error);
 
-            const errorDetails: any = {
-                message: genError.message,
-                name: genError.name,
-                stack: genError.stack,
+            const errorDetails: Record<string, unknown> = {
+                message: error.message,
+                name: error.name,
+                stack: error.stack,
             };
 
             // Attempt to extract more info from the AI SDK error
-            if (genError.response) {
-                errorDetails.status = genError.response.status;
-                errorDetails.statusText = genError.response.statusText;
+            if (error.response) {
+                errorDetails.status = error.response.status;
+                errorDetails.statusText = error.response.statusText;
             }
 
             // Log full error string for debugging
@@ -136,13 +136,13 @@ export async function POST(req: NextRequest) {
                     chatId,
                     error: {
                         ...errorDetails,
-                        raw: JSON.parse(JSON.stringify(genError)) // Try to capture everything
+                        raw: JSON.parse(JSON.stringify(error)) // Try to capture everything
                     },
                     rawMessage: message
                 }
             });
 
-            throw new Error(`Mastra Generate Error: ${genError.message}`);
+            throw new Error(`Mastra Generate Error: ${error.message}`);
         }
 
         const replyText = result.text;
@@ -165,21 +165,22 @@ export async function POST(req: NextRequest) {
                     text: replyText,
                     modelId: "eleven_v3",
                 });
-            } catch (elevenError: any) {
-                throw new Error(`ElevenLabs Error: ${elevenError.message}`);
+            } catch (elevenError: unknown) {
+                const error = elevenError as Error;
+                throw new Error(`ElevenLabs Error: ${error.message}`);
             }
 
             // Convert stream to Buffer
             const chunks = [];
-            // @ts-ignore
-            for await (const chunk of audioStream) {
+            // @ts-expect-error - ElevenLabs stream type mismatch
+            for await (const chunk of audioStream as any) {
                 chunks.push(chunk);
             }
             const audioBuffer = Buffer.concat(chunks);
 
             // Upload to Supabase Storage
             const fileName = `reply_${chatId}_${Date.now()}.mp3`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
                 .from('audio-messages')
                 .upload(fileName, audioBuffer, {
                     contentType: 'audio/mpeg',
@@ -213,8 +214,9 @@ export async function POST(req: NextRequest) {
 
             return NextResponse.json({ success: true, type: 'text', reply: replyText });
         }
-    } catch (error: any) {
-        console.error('Chat API Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        const err = error as Error;
+        console.error('Chat API Error:', err);
+        return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
