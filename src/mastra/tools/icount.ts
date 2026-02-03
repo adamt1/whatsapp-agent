@@ -177,14 +177,26 @@ export const getClientsTool = createTool({
 
             const result = await icount.getClients(params);
 
-            if (!result.client_list || result.client_list.length === 0) {
+            if (!result.client_list || (Array.isArray(result.client_list) && result.client_list.length === 0)) {
                 return {
                     success: false,
                     message: searchQuery ? `לא נמצאו לקוחות התואמים לחיפוש "${searchQuery}".` : 'לא נמצאו לקוחות במערכת.',
                 };
             }
 
-            const clients = result.client_list.slice(0, 10).map((c: any) => ({
+            // client_list can be an object with IDs as keys
+            const clientData = Array.isArray(result.client_list)
+                ? result.client_list
+                : Object.values(result.client_list);
+
+            if (clientData.length === 0) {
+                return {
+                    success: false,
+                    message: searchQuery ? `לא נמצאו לקוחות התואמים לחיפוש "${searchQuery}".` : 'לא נמצאו לקוחות במערכת.',
+                };
+            }
+
+            const clients = clientData.slice(0, 10).map((c: any) => ({
                 id: c.client_id,
                 name: c.client_name,
                 email: c.email || 'אין אימייל',
