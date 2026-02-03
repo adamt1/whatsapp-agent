@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
             }
             const requestContext = new RequestContext();
             requestContext.set('now', nowInIsrael);
+            console.log(`[Debug] requestContext type: ${typeof requestContext}, has get: ${typeof requestContext.get}`);
 
             result = await rotem.generate(messageWithContext, {
                 requestContext,
