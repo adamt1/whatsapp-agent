@@ -107,6 +107,16 @@ export class ICountService {
     }
 
     /**
+     * Get a signed URL for viewing a document
+     */
+    async getDocUrl(params: {
+        doctype: string;
+        docnum: string;
+    }) {
+        return this.request('/doc/get_url', params);
+    }
+
+    /**
      * Get company info
      */
     async getCompanyInfo() {

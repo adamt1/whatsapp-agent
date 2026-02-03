@@ -107,40 +107,58 @@ export const getLastInvoiceTool = createTool({
         docType: z.enum(['invrec', 'receipt', 'inv', 'offer']).default('invrec').describe('Type of document to fetch. Default is invrec (Invoice & Receipt).'),
     }),
     execute: async ({ docType }) => {
-        try {
-            const result = await icount.getLastDocuments({
-                doctype: docType as string,
-                limit: 1,
-            });
+        const doctypesToTry = docType ? [docType] : ['invrec', 'receipt', 'inv', 'offer'];
 
-            if (!result.results_list || result.results_list.length === 0) {
-                return {
-                    success: false,
-                    message: 'לא נמצאו מסמכים מהסוג המבוקש.',
-                };
+        for (const currentType of doctypesToTry) {
+            try {
+                console.log(`[iCount Tool] Trying to fetch last document for type: ${currentType}`);
+                const result = await icount.getLastDocuments({
+                    doctype: currentType as string,
+                    limit: 1,
+                });
+
+                if (result.results_list && result.results_list.length > 0) {
+                    const doc = result.results_list[0];
+
+                    // Try to get a viewing URL
+                    let viewUrl = doc.doc_url || '';
+                    if (!viewUrl) {
+                        try {
+                            const urlResult = await icount.getDocUrl({
+                                doctype: currentType,
+                                docnum: String(doc.docnum)
+                            });
+                            viewUrl = urlResult.url;
+                        } catch (e) {
+                            console.error(`[iCount Tool] Failed to get URL for ${currentType} ${doc.docnum}:`, (e as Error).message);
+                        }
+                    }
+
+                    return {
+                        success: true,
+                        doc: {
+                            docnum: String(doc.docnum),
+                            client_name: doc.client_name || 'לקוח כללי',
+                            total: doc.total,
+                            date: doc.dateissued,
+                            url: viewUrl,
+                        },
+                        message: `המסמך האחרון (${currentType}) הוא מספר ${doc.docnum} על סך ${doc.total} ש"ח.`,
+                    };
+                }
+            } catch (error: unknown) {
+                console.warn(`[iCount Tool] doctype ${currentType} failed:`, (error as Error).message);
+                // Continue to next doctype unless it was an explicit request
+                if (docType) {
+                    return { success: false, message: `שגיאה: ${(error as Error).message}` };
+                }
             }
-
-            const doc = result.results_list[0];
-            return {
-                success: true,
-                doc: {
-                    docnum: String(doc.docnum),
-                    client_name: doc.client_name || 'לקוח כללי',
-                    total: doc.total,
-                    date: doc.dateissued,
-                    url: doc.doc_url || '',
-                },
-                message: `המסמך האחרון (${docType}) הוא מספר ${doc.docnum} על סך ${doc.total} ש"ח.`,
-            };
-        } catch (error: unknown) {
-            const err = error as Error;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            console.error('iCount error:', (err as any).message);
-            return {
-                success: false,
-                message: `שגיאה: ${err.message}`,
-            };
         }
+
+        return {
+            success: false,
+            message: 'לא נמצאו מסמכים באף אחד מהסוגים (חשבונית מס קבלה, קבלה, חשבונית, הצעת מחיר).',
+        };
     },
 });
 
