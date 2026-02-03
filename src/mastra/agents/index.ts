@@ -21,8 +21,7 @@ export const rotemAgent = new Agent({
   id: 'rotem-agent',
   name: 'Rotem',
   instructions: async ({ requestContext }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const nowStr = (requestContext as any)?.now || new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
+    const nowStr = (requestContext?.get('now') as string) || new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
     console.log(`[Rotem Agent] Generating instructions for ${nowStr}`);
 
     return `

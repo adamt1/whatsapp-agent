@@ -1,3 +1,5 @@
+import { RequestContext } from '@mastra/core/request-context';
+
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -96,7 +98,11 @@ export async function POST(req: NextRequest) {
             if (!isPaused) {
                 greenApi.sendTyping(chatId, 'typing', 10000);
             }
+            const requestContext = new RequestContext();
+            requestContext.set('now', nowInIsrael);
+
             result = await rotem.generate(messageWithContext, {
+                requestContext,
                 memory: {
                     thread: chatId,
                     resource: chatId,
