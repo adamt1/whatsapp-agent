@@ -1,6 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
-import { icount } from '../../services/iCount';
+import { icount } from '../../services/icount';
 
 export const createQuoteTool = createTool({
     id: 'create_quote',
@@ -35,7 +35,8 @@ export const createQuoteTool = createTool({
             };
         } catch (error: unknown) {
             const err = error as Error;
-            console.error('iCount error:', err);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            console.error('iCount error:', (err as any).message);
             return {
                 success: false,
                 message: `שגיאה: ${err.message}`,
@@ -62,7 +63,8 @@ export const getIncomeReportTool = createTool({
             };
         } catch (error: unknown) {
             const err = error as Error;
-            console.error('iCount error:', err);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            console.error('iCount error:', (err as any).message);
             return {
                 success: false,
                 message: `שגיאה: ${err.message}`,
@@ -88,7 +90,8 @@ export const searchInventoryTool = createTool({
             };
         } catch (error: unknown) {
             const err = error as Error;
-            console.error('iCount error:', err);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            console.error('iCount error:', (err as any).message);
             return {
                 success: false,
                 message: `שגיאה: ${err.message}`,
@@ -131,7 +134,8 @@ export const getLastInvoiceTool = createTool({
             };
         } catch (error: unknown) {
             const err = error as Error;
-            console.error('iCount error:', err);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            console.error('iCount error:', (err as any).message);
             return {
                 success: false,
                 message: `שגיאה: ${err.message}`,
@@ -177,7 +181,8 @@ export const getProfitabilityReportTool = createTool({
             };
         } catch (error: unknown) {
             const err = error as Error;
-            console.error('iCount error:', err);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            console.error('iCount error:', (err as any).message);
             return {
                 success: false,
                 message: `שגיאה: ${err.message}`,
