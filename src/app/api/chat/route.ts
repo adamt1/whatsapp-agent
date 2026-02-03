@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { mastra } from '@/mastra';
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
@@ -83,13 +85,8 @@ export async function POST(req: NextRequest) {
         const senderId = chatId.split('@')[0];
         const nowInIsrael = new Date().toLocaleString('he-IL', {
             timeZone: 'Asia/Jerusalem',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            weekday: 'long'
+            dateStyle: 'full',
+            timeStyle: 'medium'
         });
         const messageWithContext = `[Current Date/Time: ${nowInIsrael}]\n[Sender ID: ${senderId}]\n${incomingText}`;
 
