@@ -21,8 +21,9 @@ export const rotemAgent = new Agent({
   id: 'rotem-agent',
   name: 'Rotem',
   instructions: async ({ requestContext }) => {
-    const nowStr = (requestContext?.get('now') as string) || new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
-    console.log(`[Rotem Agent] Generating instructions for ${nowStr}`);
+    const rc = requestContext as any;
+    const nowStr = (typeof rc?.get === 'function' ? rc.get('now') : rc?.now) || new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
+    console.log(`[Rotem Agent] Generating instructions for ${nowStr}. rc has get: ${typeof rc?.get === 'function'}`);
 
     return `
     את/ה רותם (Rotem), הנציגה הדיגיטלית הרשמית של "איי קיי חברת ניקיון ואחזקה" (AK Cleaning & Maintenance).

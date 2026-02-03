@@ -100,15 +100,33 @@ export async function POST(req: NextRequest) {
             }
             const requestContext = new RequestContext();
             requestContext.set('now', nowInIsrael);
-            console.log(`[Debug] requestContext type: ${typeof requestContext}, has get: ${typeof requestContext.get}`);
 
-            result = await rotem.generate(messageWithContext, {
-                requestContext,
-                memory: {
-                    thread: chatId,
-                    resource: chatId,
-                },
-            });
+            // Diagnostics
+            const hasGet = typeof requestContext.get === 'function';
+            const isInstance = requestContext instanceof RequestContext;
+            console.log(`[Debug] requestContext - hasGet: ${hasGet}, isInstance: ${isInstance}`);
+
+            try {
+                result = await rotem.generate(messageWithContext, {
+                    requestContext,
+                    memory: {
+                        thread: chatId,
+                        resource: chatId,
+                    },
+                });
+            } catch (genError: any) {
+                // Log the failure with diagnostics to Supabase
+                await supabase.from('debug_logs').insert({
+                    payload: {
+                        diag: 'request-context-fail',
+                        hasGet,
+                        isInstance,
+                        error: genError.message,
+                        stack: genError.stack,
+                    }
+                });
+                throw genError;
+            }
         } catch (genError: unknown) {
             const error = genError as Error & { response?: { status: number, statusText: string } };
             console.error('Mastra Generate Detailed Error:', error);
