@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { mastra } from '@/mastra';
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { supabase } from '@/services/supabase';
-import { greenApi } from '@/services/greenApi';
+import { greenApi } from '@/services/greenapi';
 
 // const GREEN_API_URL = process.env.NEXT_PUBLIC_GREEN_API_URL;
 // const ID_INSTANCE = process.env.NEXT_PUBLIC_GREEN_API_ID_INSTANCE;

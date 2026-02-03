@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { greenApi, GreenApiState, GreenApiSettings } from '@/services/greenApi';
+import { greenApi, GreenApiState, GreenApiSettings } from '@/services/greenapi';
 import { supabase } from '@/services/supabase';
 
 export default function Home() {
