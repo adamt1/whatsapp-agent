@@ -105,7 +105,8 @@ Deno.serve(async (req: Request) => {
 
             let isPaused = false;
             if (session && session.is_paused) {
-                const pauseDuration = 6 * 60 * 60 * 1000; // 6 hours
+                const isVIP = chatId === "972542619636@c.us";
+                const pauseDuration = isVIP ? 24 * 60 * 60 * 1000 : 6 * 60 * 60 * 1000; // 24h for specific contact, else 6h
                 const lastHumanAt = new Date(session.last_human_at).getTime();
                 const now = new Date().getTime();
 
@@ -155,6 +156,10 @@ Deno.serve(async (req: Request) => {
             }
 
             const isAudio = payload.messageData?.typeMessage === "audioMessage";
+            const fileData = isAudio ? payload.messageData.fileMessageData : null;
+            const downloadUrl = fileData?.downloadUrl;
+            const mimeType = fileData?.mimeType;
+
             const text = payload.messageData?.textMessageData?.textMessage ||
                 payload.messageData?.extendedTextMessageData?.text ||
                 (isAudio ? "שלחת לי הודעה קולית" : ""); // Handle audio gracefully
@@ -170,6 +175,8 @@ Deno.serve(async (req: Request) => {
                         message: text,
                         chatId: chatId,
                         messageType: isAudio ? "audio" : "text",
+                        downloadUrl: downloadUrl,
+                        mimeType: mimeType,
                         isPaused: isPaused
                     })
                 });

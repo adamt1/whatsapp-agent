@@ -53,8 +53,24 @@ class GreenApiService {
         return this.request('GET', 'getStateInstance');
     }
 
-    async sendMessage(chatId: string, message: string) {
-        const response = await this.request('POST', 'sendMessage', { chatId, message });
+    async sendTyping(chatId: string, type: 'typing' | 'recording' = 'typing', time: number = 5000) {
+        try {
+            return await this.request('POST', 'sendTyping', {
+                chatId: chatId,
+                typingType: type,
+                typingTime: time
+            });
+        } catch (e) {
+            console.error('Failed to set typing status:', e);
+        }
+    }
+
+    async sendMessage(chatId: string, message: string, typingType?: 'typing' | 'recording', typingTime?: number) {
+        const body: any = { chatId, message };
+        if (typingType) body.typingType = typingType;
+        if (typingTime) body.typingTime = typingTime;
+
+        const response = await this.request('POST', 'sendMessage', body);
 
         // Log to Supabase
         await supabase.from('messages').insert({
@@ -67,8 +83,12 @@ class GreenApiService {
         return response;
     }
 
-    async sendFileByUrl(chatId: string, urlFile: string, fileName: string, caption?: string) {
-        return this.request('POST', 'sendFileByUrl', { chatId, urlFile, fileName, caption });
+    async sendFileByUrl(chatId: string, urlFile: string, fileName: string, caption?: string, typingType?: 'typing' | 'recording', typingTime?: number) {
+        const body: any = { chatId, urlFile, fileName, caption };
+        if (typingType) body.typingType = typingType;
+        if (typingTime) body.typingTime = typingTime;
+
+        return this.request('POST', 'sendFileByUrl', body);
     }
 }
 

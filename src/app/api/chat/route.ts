@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { mastra } from '@/mastra';
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { supabase } from '@/services/supabase';
+import { greenApi } from '@/services/greenApi';
 
 const GREEN_API_URL = process.env.NEXT_PUBLIC_GREEN_API_URL;
 const ID_INSTANCE = process.env.NEXT_PUBLIC_GREEN_API_ID_INSTANCE;
@@ -14,12 +15,54 @@ const elevenlabs = new ElevenLabsClient({
 });
 
 
+
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { message, chatId, messageType, isPaused } = body;
+        const { message, chatId, messageType, isPaused, downloadUrl } = body;
 
-        console.log(`[Next.js API] Received request for chatId: ${chatId}`);
+        console.log(`[Next.js API] Received request for chatId: ${chatId}, type: ${messageType}`);
+
+        // Set typing status immediately (unless in background mode)
+        if (!isPaused) {
+            greenApi.sendTyping(chatId, messageType === 'audio' ? 'recording' : 'typing', 8000);
+        }
+
+        let incomingText = message;
+
+        // If audio, transcribe it first
+        if (messageType === 'audio' && downloadUrl) {
+            console.log(`Downloading audio from ${downloadUrl}...`);
+            try {
+                const audioRes = await fetch(downloadUrl);
+                if (!audioRes.ok) throw new Error(`Failed to download audio: ${audioRes.statusText}`);
+
+                const audioBlob = await audioRes.blob();
+
+                console.log(`Transcribing audio with ElevenLabs [scribe_v2]...`);
+                // @ts-ignore
+                const transcription = await elevenlabs.speechToText.convert({
+                    file: audioBlob,
+                    modelId: "scribe_v2",
+                    languageCode: "he",
+                    tagAudioEvents: true,
+                });
+
+                if ('text' in transcription) {
+                    // @ts-ignore
+                    incomingText = transcription.text;
+                } else if ('transcripts' in transcription) {
+                    // @ts-ignore
+                    incomingText = transcription.transcripts.map((t: any) => t.text).join(' ');
+                }
+
+                console.log(`Transcribed text: ${incomingText}`);
+            } catch (sttError: any) {
+                console.error('STT Error:', sttError);
+                // Fallback to placeholder if transcription fails
+                incomingText = message || "שלחת לי הודעה קולית (נכשלה המרת הטקסט)";
+            }
+        }
 
         // Log entry to Supabase for tracking the chain
         await supabase.from('debug_logs').insert({
@@ -27,28 +70,46 @@ export async function POST(req: NextRequest) {
                 diag: 'chat-api-entry',
                 chatId,
                 messageType,
-                isPaused
+                isPaused,
+                transcribedText: incomingText !== message ? incomingText : undefined
             }
         });
 
-        if (!message || !chatId) {
+        if (!incomingText || !chatId) {
             return NextResponse.json({ error: 'Missing message or chatId' }, { status: 400 });
         }
 
         const rotem = mastra.getAgent('rotemAgent');
 
-        // Generate reply using Mastra with memory (always do this to keep context)
+        // Generate reply using Mastra with memory
         let result;
         const senderId = chatId.split('@')[0];
-        const messageWithContext = `[Sender ID: ${senderId}]\n${message}`;
+        const nowInIsrael = new Date().toLocaleString('he-IL', {
+            timeZone: 'Asia/Jerusalem',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            weekday: 'long'
+        });
+        const messageWithContext = `[Current Date/Time: ${nowInIsrael}]\n[Sender ID: ${senderId}]\n${incomingText}`;
 
         try {
             console.log(`Calling Mastra generate for ${chatId}...`);
+            // Show bot is thinking
+            if (!isPaused) {
+                greenApi.sendTyping(chatId, 'typing', 10000);
+            }
             result = await rotem.generate(messageWithContext, {
                 memory: {
                     thread: chatId,
                     resource: chatId,
                 },
+                requestContext: {
+                    now: nowInIsrael
+                } as any
             });
         } catch (genError: any) {
             console.error('Mastra Generate Detailed Error:', genError);
@@ -136,31 +197,19 @@ export async function POST(req: NextRequest) {
                 .getPublicUrl(fileName);
 
             // Send Voice Message via Green API
-            const greenUrl = `${GREEN_API_URL}/waInstance${ID_INSTANCE}/sendFileByUrl/${API_TOKEN}`;
-            const greenRes = await fetch(greenUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chatId: chatId,
-                    urlFile: publicUrl,
-                    fileName: 'voice.mp3',
-                    typingType: 'recording',
-                    typingTime: 3000
-                }),
-            });
+            await greenApi.sendFileByUrl(
+                chatId,
+                publicUrl,
+                'voice.mp3',
+                undefined,
+                'recording',
+                3000
+            );
 
             return NextResponse.json({ success: true, type: 'audio', audioUrl: publicUrl });
         } else {
             // Send Text Message via Green API
-            const greenUrl = `${GREEN_API_URL}/waInstance${ID_INSTANCE}/sendMessage/${API_TOKEN}`;
-            const greenRes = await fetch(greenUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chatId: chatId,
-                    message: replyText
-                }),
-            });
+            await greenApi.sendMessage(chatId, replyText, 'typing', 3000);
 
             return NextResponse.json({ success: true, type: 'text', reply: replyText });
         }
