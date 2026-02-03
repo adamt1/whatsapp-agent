@@ -125,6 +125,8 @@ export class ICountService {
         mobile?: string;
         phone?: string;
         detail_level?: number;
+        list_type?: 'array' | 'object';
+        include_leads?: boolean;
     } = {}) {
         return this.request('/client/get_list', params);
     }
