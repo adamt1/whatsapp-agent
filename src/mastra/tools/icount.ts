@@ -172,7 +172,8 @@ export const getClientsTool = createTool({
         try {
             const params: any = {
                 detail_level: 1,
-                list_type: 'array'
+                list_type: 'array',
+                include_leads: true
             };
             if (searchQuery) {
                 params.client_name = searchQuery;
@@ -180,17 +181,20 @@ export const getClientsTool = createTool({
 
             const result = await icount.getClients(params);
 
-            if (!result.client_list || (Array.isArray(result.client_list) && result.client_list.length === 0)) {
+            // iCount API uses 'clients' key, but we handle 'client_list' for legacy support
+            const clientsRaw = result.clients || result.client_list;
+
+            if (!clientsRaw || (Array.isArray(clientsRaw) && clientsRaw.length === 0)) {
                 return {
                     success: false,
                     message: searchQuery ? `לא נמצאו לקוחות התואמים לחיפוש "${searchQuery}".` : 'לא נמצאו לקוחות במערכת.',
                 };
             }
 
-            // client_list can be an object with IDs as keys, though we request 'array'
-            const clientData = Array.isArray(result.client_list)
-                ? result.client_list
-                : Object.values(result.client_list);
+            // client data can be an object with IDs as keys, though we request 'array'
+            const clientData = Array.isArray(clientsRaw)
+                ? clientsRaw
+                : Object.values(clientsRaw);
 
             if (clientData.length === 0) {
                 return {
