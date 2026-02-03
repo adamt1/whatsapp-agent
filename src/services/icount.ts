@@ -117,6 +117,19 @@ export class ICountService {
     }
 
     /**
+     * Get list of clients
+     */
+    async getClients(params: {
+        client_name?: string;
+        email?: string;
+        mobile?: string;
+        phone?: string;
+        detail_level?: number;
+    } = {}) {
+        return this.request('/client/get_list', params);
+    }
+
+    /**
      * Get company info
      */
     async getCompanyInfo() {

@@ -162,6 +162,51 @@ export const getLastInvoiceTool = createTool({
     },
 });
 
+export const getClientsTool = createTool({
+    id: 'get_clients',
+    description: 'Fetches a list of clients from iCount, optionally filtered by name, email, or phone.',
+    inputSchema: z.object({
+        searchQuery: z.string().optional().describe('Filter by client name, email, or phone number'),
+    }),
+    execute: async ({ searchQuery }) => {
+        try {
+            const params: any = { detail_level: 1 };
+            if (searchQuery) {
+                params.client_name = searchQuery;
+            }
+
+            const result = await icount.getClients(params);
+
+            if (!result.client_list || result.client_list.length === 0) {
+                return {
+                    success: false,
+                    message: searchQuery ? `לא נמצאו לקוחות התואמים לחיפוש "${searchQuery}".` : 'לא נמצאו לקוחות במערכת.',
+                };
+            }
+
+            const clients = result.client_list.slice(0, 10).map((c: any) => ({
+                id: c.client_id,
+                name: c.client_name,
+                email: c.email || 'אין אימייל',
+                phone: c.mobile || c.phone || 'אין טלפון',
+            }));
+
+            return {
+                success: true,
+                clients,
+                message: `נמצאו ${result.client_list.length} לקוחות. מציג את ה-10 הראשונים.`,
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            console.error('iCount error:', err.message);
+            return {
+                success: false,
+                message: `שגיאה במשיכת לקוחות: ${err.message}`,
+            };
+        }
+    },
+});
+
 export const getProfitabilityReportTool = createTool({
     id: 'get_profitability_report',
     description: 'Fetches monthly profitability data (invoices, receipts, expenses, profit) for a specific date range.',
