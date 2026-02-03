@@ -170,7 +170,10 @@ export const getClientsTool = createTool({
     }),
     execute: async ({ searchQuery }) => {
         try {
-            const params: any = { detail_level: 1 };
+            const params: any = {
+                detail_level: 1,
+                list_type: 'array'
+            };
             if (searchQuery) {
                 params.client_name = searchQuery;
             }
@@ -184,7 +187,7 @@ export const getClientsTool = createTool({
                 };
             }
 
-            // client_list can be an object with IDs as keys
+            // client_list can be an object with IDs as keys, though we request 'array'
             const clientData = Array.isArray(result.client_list)
                 ? result.client_list
                 : Object.values(result.client_list);
@@ -206,7 +209,7 @@ export const getClientsTool = createTool({
             return {
                 success: true,
                 clients,
-                message: `נמצאו ${result.client_list.length} לקוחות. מציג את ה-10 הראשונים.`,
+                message: `נמצאו ${clientData.length} לקוחות. מציג את ה-10 הראשונים.`,
             };
         } catch (error: unknown) {
             const err = error as Error;
