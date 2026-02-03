@@ -28,9 +28,9 @@ export async function POST(req: NextRequest) {
         console.log(`[Next.js API] Received request for chatId: ${chatId}, type: ${messageType}`);
 
         // Set typing status immediately (unless in background mode)
-        if (!isPaused) {
-            greenApi.sendTyping(chatId, messageType === 'audio' ? 'recording' : 'typing', 8000);
-        }
+        // if (!isPaused) {
+        //     greenApi.sendTyping(chatId, messageType === 'audio' ? 'recording' : 'typing', 8000);
+        // }
 
         let incomingText = message;
 
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
         // BACKGROUND MODE: If paused, don't send the reply
         if (isPaused) {
             console.log(`Background mode active for ${chatId}. Skipping outgoing message.`);
-            return NextResponse.json({ success: true, mode: 'background', reply: replyText });
+            return NextResponse.json({ success: true, mode: 'background', reply: replyText, v: 'v4-final' });
         }
 
         // Decide output: Audio if requested, else Text
@@ -229,12 +229,12 @@ export async function POST(req: NextRequest) {
                 'voice.mp3'
             );
 
-            return NextResponse.json({ success: true, type: 'audio', audioUrl: publicUrl });
+            return NextResponse.json({ success: true, type: 'audio', audioUrl: publicUrl, v: 'v4-final' });
         } else {
             // Send Text Message via Green API
             await greenApi.sendMessage(chatId, replyText);
 
-            return NextResponse.json({ success: true, type: 'text', reply: replyText });
+            return NextResponse.json({ success: true, type: 'text', reply: replyText, v: 'v4-final' });
         }
     } catch (error: unknown) {
         const err = error as Error;
