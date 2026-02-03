@@ -40,7 +40,6 @@ export async function POST(req: NextRequest) {
                 const audioBlob = await audioRes.blob();
 
                 console.log(`Transcribing audio with ElevenLabs [scribe_v2]...`);
-                // @ts-expect-error - ElevenLabs SDK types might be missing scribe_v2
                 const transcription = await elevenlabs.speechToText.convert({
                     file: audioBlob,
                     modelId: "scribe_v2",
@@ -172,7 +171,6 @@ export async function POST(req: NextRequest) {
 
             // Convert stream to Buffer
             const chunks = [];
-            // @ts-expect-error - ElevenLabs stream type mismatch
             for await (const chunk of audioStream as any) {
                 chunks.push(chunk);
             }
