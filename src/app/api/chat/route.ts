@@ -95,16 +95,17 @@ export async function POST(req: NextRequest) {
         try {
             console.log(`Calling Mastra generate for ${chatId}...`);
             // Show bot is thinking
-            if (!isPaused) {
-                greenApi.sendTyping(chatId, 'typing', 10000);
-            }
+            // Removed sendTyping call as per instruction
+            // if (!isPaused) {
+            //     greenApi.sendTyping(chatId, 'typing', 10000);
+            // }
             const requestContext = new RequestContext();
             requestContext.set('now', nowInIsrael);
 
-            // Diagnostics
-            const hasGet = typeof requestContext.get === 'function';
-            const isInstance = requestContext instanceof RequestContext;
-            console.log(`[Debug] requestContext - hasGet: ${hasGet}, isInstance: ${isInstance}`);
+            // Diagnostics removed as per instruction
+            // const hasGet = typeof requestContext.get === 'function';
+            // const isInstance = requestContext instanceof RequestContext;
+            // console.log(`[Debug] requestContext - hasGet: ${hasGet}, isInstance: ${isInstance}`);
 
             try {
                 result = await rotem.generate(messageWithContext, {
@@ -114,13 +115,21 @@ export async function POST(req: NextRequest) {
                         resource: chatId,
                     },
                 });
+
+                // Log response successfully received
+                await supabase.from('debug_logs').insert({
+                    payload: {
+                        diag: 'rotem-success',
+                        chatId,
+                        message: incomingText,
+                        reply: result.text
+                    }
+                });
             } catch (genError: any) {
                 // Log the failure with diagnostics to Supabase
                 await supabase.from('debug_logs').insert({
                     payload: {
                         diag: 'request-context-fail',
-                        hasGet,
-                        isInstance,
                         error: genError.message,
                         stack: genError.stack,
                     }

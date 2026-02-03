@@ -54,24 +54,8 @@ class GreenApiService {
     }
 
     async sendTyping(chatId: string, type: 'typing' | 'recording' = 'typing', time: number = 5000) {
-        try {
-            const body: any = {
-                chatId: chatId,
-                typingTime: time
-            };
-
-            // Only include typingType if it is 'recording'. 
-            // For 'typing', it's often the default or omitted in some API versions.
-            if (type === 'recording') {
-                body.typingType = 'recording';
-            } else {
-                body.typingType = 'typing';
-            }
-
-            return await this.request('POST', 'sendTyping', body);
-        } catch (e) {
-            console.error('Failed to set typing status:', e);
-        }
+        console.log(`[GreenAPI] Mock sendTyping for ${chatId}`);
+        return { success: true };
     }
 
     async sendMessage(chatId: string, message: string) {
