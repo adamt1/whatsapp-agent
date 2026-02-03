@@ -217,16 +217,13 @@ export async function POST(req: NextRequest) {
             await greenApi.sendFileByUrl(
                 chatId,
                 publicUrl,
-                'voice.mp3',
-                undefined,
-                'recording',
-                3000
+                'voice.mp3'
             );
 
             return NextResponse.json({ success: true, type: 'audio', audioUrl: publicUrl });
         } else {
             // Send Text Message via Green API
-            await greenApi.sendMessage(chatId, replyText, 'typing', 3000);
+            await greenApi.sendMessage(chatId, replyText);
 
             return NextResponse.json({ success: true, type: 'text', reply: replyText });
         }
