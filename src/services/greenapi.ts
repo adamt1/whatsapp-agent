@@ -54,8 +54,15 @@ class GreenApiService {
     }
 
     async sendTyping(chatId: string, type: 'typing' | 'recording' = 'typing', time: number = 5000) {
-        console.log(`[GreenAPI] Mock sendTyping for ${chatId}`);
-        return { success: true };
+        try {
+            const body: any = { chatId, typingTime: time };
+            if (type === 'recording') {
+                body.typingType = 'recording';
+            }
+            return await this.request('POST', 'sendTyping', body);
+        } catch (e) {
+            console.error('Failed to set typing status:', e);
+        }
     }
 
     async sendMessage(chatId: string, message: string) {

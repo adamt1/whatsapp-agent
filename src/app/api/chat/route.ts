@@ -28,9 +28,9 @@ export async function POST(req: NextRequest) {
         console.log(`[Next.js API] Received request for chatId: ${chatId}, type: ${messageType}`);
 
         // Set typing status immediately (unless in background mode)
-        // if (!isPaused) {
-        //     greenApi.sendTyping(chatId, messageType === 'audio' ? 'recording' : 'typing', 8000);
-        // }
+        if (!isPaused) {
+            greenApi.sendTyping(chatId, messageType === 'audio' ? 'recording' : 'typing', 8000);
+        }
 
         let incomingText = message;
 
@@ -107,35 +107,13 @@ export async function POST(req: NextRequest) {
             // const isInstance = requestContext instanceof RequestContext;
             // console.log(`[Debug] requestContext - hasGet: ${hasGet}, isInstance: ${isInstance}`);
 
-            try {
-                result = await rotem.generate(messageWithContext, {
-                    requestContext,
-                    memory: {
-                        thread: chatId,
-                        resource: chatId,
-                    },
-                });
-
-                // Log response successfully received
-                await supabase.from('debug_logs').insert({
-                    payload: {
-                        diag: 'rotem-success',
-                        chatId,
-                        message: incomingText,
-                        reply: result.text
-                    }
-                });
-            } catch (genError: any) {
-                // Log the failure with diagnostics to Supabase
-                await supabase.from('debug_logs').insert({
-                    payload: {
-                        diag: 'request-context-fail',
-                        error: genError.message,
-                        stack: genError.stack,
-                    }
-                });
-                throw genError;
-            }
+            result = await rotem.generate(messageWithContext, {
+                requestContext,
+                memory: {
+                    thread: chatId,
+                    resource: chatId,
+                },
+            });
         } catch (genError: unknown) {
             const error = genError as Error & { response?: { status: number, statusText: string } };
             console.error('Mastra Generate Detailed Error:', error);
@@ -177,7 +155,7 @@ export async function POST(req: NextRequest) {
         // BACKGROUND MODE: If paused, don't send the reply
         if (isPaused) {
             console.log(`Background mode active for ${chatId}. Skipping outgoing message.`);
-            return NextResponse.json({ success: true, mode: 'background', reply: replyText, v: 'v4-final' });
+            return NextResponse.json({ success: true, mode: 'background', reply: replyText });
         }
 
         // Decide output: Audio if requested, else Text
@@ -229,12 +207,12 @@ export async function POST(req: NextRequest) {
                 'voice.mp3'
             );
 
-            return NextResponse.json({ success: true, type: 'audio', audioUrl: publicUrl, v: 'v4-final' });
+            return NextResponse.json({ success: true, type: 'audio', audioUrl: publicUrl });
         } else {
             // Send Text Message via Green API
             await greenApi.sendMessage(chatId, replyText);
 
-            return NextResponse.json({ success: true, type: 'text', reply: replyText, v: 'v4-final' });
+            return NextResponse.json({ success: true, type: 'text', reply: replyText });
         }
     } catch (error: unknown) {
         const err = error as Error;
