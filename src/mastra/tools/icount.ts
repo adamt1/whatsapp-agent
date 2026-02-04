@@ -170,16 +170,7 @@ export const getClientsTool = createTool({
     }),
     execute: async ({ searchQuery }) => {
         try {
-            const params: any = {
-                detail_level: 1,
-                list_type: 'array',
-                include_leads: true
-            };
-            if (searchQuery) {
-                params.client_name = searchQuery;
-            }
-
-            const result = await icount.getClients(params);
+            const result = await icount.getClients({ searchQuery });
 
             // iCount API uses 'clients' key, but we handle 'client_list' for legacy support
             const clientsRaw = result.clients || result.client_list;

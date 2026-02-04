@@ -140,15 +140,19 @@ export class ICountService {
      * Get list of clients
      */
     async getClients(params: {
-        client_name?: string;
-        email?: string;
-        mobile?: string;
-        phone?: string;
-        detail_level?: number;
-        list_type?: 'array' | 'object';
+        searchQuery?: string;
         include_leads?: boolean;
     } = {}) {
-        return this.request('/client/get_list', params);
+        const query: any = {
+            list_type: 'array',
+            include_leads: params.include_leads ?? true,
+        };
+
+        if (params.searchQuery) {
+            query.client_name = params.searchQuery;
+        }
+
+        return this.request('/client/get_list', query);
     }
 
     /**
