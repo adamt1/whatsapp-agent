@@ -125,6 +125,33 @@ export const getIncomeTypesTool = createTool({
     },
 });
 
+export const addIncomeTypeTool = createTool({
+    id: 'add_income_type',
+    description: 'Adds a new income type (revenue category) to iCount.',
+    inputSchema: z.object({
+        name: z.string().describe('The name of the new income type (e.g. "Special Services")'),
+    }),
+    execute: async ({ name }) => {
+        try {
+            const result = await icount.addIncomeType({
+                income_type_name: name
+            });
+
+            return {
+                success: true,
+                incomeTypeId: result.income_type_id,
+                message: `סוג הכנסה חדש "${name}" נוסף בהצלחה למערכת (מזהה: ${result.income_type_id}).`,
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            return {
+                success: false,
+                message: `שגיאה בהוספת סוג הכנסה: ${err.message}`,
+            };
+        }
+    },
+});
+
 export const searchInventoryTool = createTool({
     id: 'search_inventory',
     description: 'Search for items, price lists, or services in the iCount inventory.',

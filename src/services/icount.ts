@@ -198,6 +198,18 @@ export class ICountService {
     }
 
     /**
+     * Add a new income type
+     */
+    async addIncomeType(params: {
+        income_type_name: string;
+        sortcode_id?: number;
+        main_account?: number;
+        faccount?: number;
+    }) {
+        return this.request('/income_type/add', params);
+    }
+
+    /**
      * Send an existing document by email
      */
     async sendDocEmail(params: {
