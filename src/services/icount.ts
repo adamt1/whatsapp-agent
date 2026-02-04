@@ -135,9 +135,23 @@ export class ICountService {
      */
     async getDocUrl(params: {
         doctype: string;
-        docnum: string;
+        docnum: string | number;
     }) {
-        return this.request('/doc/get_url', params);
+        return this.request('/doc/get_doc_url', params);
+    }
+
+    /**
+     * Get available document types
+     */
+    async getDocTypes(list_type: 'array' | 'object' = 'array') {
+        return this.request('/doc/types', { list_type });
+    }
+
+    /**
+     * Get next document numbers for every type
+     */
+    async getNextDocNums() {
+        return this.request('/doc/get_next_docnums');
     }
 
     /**
