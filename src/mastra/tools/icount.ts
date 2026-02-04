@@ -109,55 +109,38 @@ export const getLastInvoiceTool = createTool({
     execute: async ({ docType }) => {
         const doctypesToTry = docType ? [docType] : ['invrec', 'invoice', 'receipt', 'offer'];
 
-        for (const currentType of doctypesToTry) {
-            try {
-                console.log(`[iCount Tool] Trying to fetch last document for type: ${currentType}`);
-                const result = await icount.getLastDocuments({
-                    doctype: currentType as string,
-                    limit: 1,
-                });
+        try {
+            console.log(`[iCount Tool] Fetching last document. Search types: ${doctypesToTry.join(', ')}`);
+            const result = await icount.searchDocuments({
+                doctype: doctypesToTry,
+                limit: 1,
+                get_doc_url: true,
+                detail_level: 1,
+            });
 
-                if (result.results_list && result.results_list.length > 0) {
-                    const doc = result.results_list[0];
+            if (result.results_list && result.results_list.length > 0) {
+                const doc = result.results_list[0];
 
-                    // Try to get a viewing URL
-                    let viewUrl = doc.doc_url || '';
-                    if (!viewUrl) {
-                        try {
-                            const urlResult = await icount.getDocUrl({
-                                doctype: currentType,
-                                docnum: String(doc.docnum)
-                            });
-                            viewUrl = urlResult.url;
-                        } catch (e) {
-                            console.error(`[iCount Tool] Failed to get URL for ${currentType} ${doc.docnum}:`, (e as Error).message);
-                        }
-                    }
-
-                    return {
-                        success: true,
-                        doc: {
-                            docnum: String(doc.docnum),
-                            client_name: doc.client_name || 'לקוח כללי',
-                            total: doc.total,
-                            date: doc.dateissued,
-                            url: viewUrl,
-                        },
-                        message: `המסמך האחרון (${currentType}) הוא מספר ${doc.docnum} על סך ${doc.total} ש"ח.`,
-                    };
-                }
-            } catch (error: unknown) {
-                console.warn(`[iCount Tool] doctype ${currentType} failed:`, (error as Error).message);
-                // Continue to next doctype unless it was an explicit request from the user for a SPECIFIC type
-                if (docType) {
-                    return { success: false, message: `שגיאה במשיכת ${currentType}: ${(error as Error).message}` };
-                }
+                return {
+                    success: true,
+                    doc: {
+                        docnum: String(doc.docnum),
+                        client_name: doc.client_name || 'לקוח כללי',
+                        total: doc.total,
+                        date: doc.dateissued,
+                        url: doc.doc_url || '',
+                    },
+                    message: `המסמך האחרון (${doc.doctype}) הוא מספר ${doc.docnum} על סך ${doc.total} ש"ח.`,
+                };
             }
+        } catch (error: unknown) {
+            console.error(`[iCount Tool] getLastInvoice failed:`, (error as Error).message);
+            return { success: false, message: `שגיאה במשיכת המסמך: ${(error as Error).message}` };
         }
 
         return {
             success: false,
-            message: 'לא נמצאו מסמכים באף אחד מהסוגים (חשבונית מס קבלה, קבלה, חשבונית, הצעת מחיר).',
+            message: 'לא נמצאו מסמכים התואמים לחיפוש.',
         };
     },
 });
@@ -341,8 +324,9 @@ export const searchDocumentsTool = createTool({
                 number: d.docnum,
                 date: d.dateissued,
                 client: d.client_name,
-                total: `${d.total} ${d.currency_code}`,
+                total: `${d.total} ${d.currency_code || 'ILS'}`,
                 status: d.status === 1 ? 'סגור' : (d.status === 0 ? 'פתוח' : 'סגור חלקית'),
+                url: d.doc_url || '',
             }));
 
             return {

@@ -84,8 +84,8 @@ export class ICountService {
      * Search documents with various filters
      */
     async searchDocuments(params: {
-        doctype?: string;
-        docnum?: string | number;
+        doctype?: string | string[];
+        docnum?: string | number | (string | number)[];
         client_name?: string;
         client_id?: number;
         start_date?: string;
@@ -94,11 +94,15 @@ export class ICountService {
         limit?: number;
         sort_field?: string;
         sort_order?: 'ASC' | 'DESC';
+        get_doc_url?: boolean;
+        detail_level?: number;
     }) {
         return this.request('/doc/search', {
-            limit: 10,
+            limit: 20,
             sort_field: 'dateissued',
             sort_order: 'DESC',
+            get_doc_url: true,
+            detail_level: 1,
             ...params
         });
     }
