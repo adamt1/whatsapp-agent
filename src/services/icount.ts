@@ -191,6 +191,31 @@ export class ICountService {
     }
 
     /**
+     * Get user info
+     */
+    async getUserInfo(params: {
+        user_id?: number;
+        username?: string;
+        user_email?: string;
+    }) {
+        return this.request('/user/info', params);
+    }
+
+    /**
+     * Get users list
+     */
+    async getUsersList(list_type: 'array' | 'object' = 'array') {
+        return this.request('/user/get_list', { list_type });
+    }
+
+    /**
+     * Get user privilege levels
+     */
+    async getPrivLevels(list_type: 'array' | 'object' = 'array') {
+        return this.request('/user/priv_levels', { list_type });
+    }
+
+    /**
      * Get list of income types
      */
     async getIncomeTypes(list_type: 'array' | 'object' = 'array') {

@@ -152,6 +152,93 @@ export const addIncomeTypeTool = createTool({
     },
 });
 
+export const getUsersTool = createTool({
+    id: 'get_users',
+    description: 'Fetches the list of users in the iCount company.',
+    inputSchema: z.object({}),
+    execute: async () => {
+        try {
+            const result = await icount.getUsersList();
+            const usersRaw = result.users || [];
+            const usersArr = Array.isArray(usersRaw) ? usersRaw : Object.values(usersRaw);
+
+            const users = usersArr.map((u: any) => ({
+                id: u.user_id,
+                name: u.username,
+                email: u.user_email,
+                privilegeId: u.privilege_id
+            }));
+
+            return {
+                success: true,
+                users,
+                message: `נמצאו ${users.length} משתמשים במערכת.`,
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            return {
+                success: false,
+                message: `שגיאה במשיכת רשימת משתמשים: ${err.message}`,
+            };
+        }
+    },
+});
+
+export const getPrivLevelsTool = createTool({
+    id: 'get_priv_levels',
+    description: 'Fetches the list of user privilege levels defined in iCount.',
+    inputSchema: z.object({}),
+    execute: async () => {
+        try {
+            const result = await icount.getPrivLevels();
+            const levels = result.privilege_levels || [];
+
+            return {
+                success: true,
+                levels,
+                message: `נמצאו ${Object.keys(levels).length} רמות הרשאה במערכת.`,
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            return {
+                success: false,
+                message: `שגיאה במשיכת רמות הרשאה: ${err.message}`,
+            };
+        }
+    },
+});
+
+export const getUserInfoTool = createTool({
+    id: 'get_user_info',
+    description: 'Fetches detailed information about a specific iCount user.',
+    inputSchema: z.object({
+        userId: z.number().optional().describe('User ID'),
+        username: z.string().optional().describe('Username'),
+        email: z.string().optional().describe('User email'),
+    }),
+    execute: async ({ userId, username, email }) => {
+        try {
+            const result = await icount.getUserInfo({
+                user_id: userId,
+                username,
+                user_email: email,
+            });
+
+            return {
+                success: true,
+                user: result.user_info,
+                message: `מידע על המשתמש ${result.user_info.username} התקבל בהצלחה.`,
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            return {
+                success: false,
+                message: `שגיאה במשיכת מידע על משתמש: ${err.message}`,
+            };
+        }
+    },
+});
+
 export const searchInventoryTool = createTool({
     id: 'search_inventory',
     description: 'Search for items, price lists, or services in the iCount inventory.',
