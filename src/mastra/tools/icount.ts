@@ -73,6 +73,34 @@ export const getIncomeReportTool = createTool({
     },
 });
 
+export const getVatReportTool = createTool({
+    id: 'get_vat_report',
+    description: 'Fetches the VAT report for a specific period to see VAT payments or refunds.',
+    inputSchema: z.object({
+        startMonth: z.string().describe('Start month in YYYY-MM format (e.g., 2024-01)'),
+        endMonth: z.string().describe('End month in YYYY-MM format (e.g., 2024-12)'),
+    }),
+    execute: async ({ startMonth, endMonth }) => {
+        try {
+            const result = await icount.getVatReport(startMonth, endMonth);
+
+            return {
+                success: true,
+                report: result,
+                message: `דוח מע"מ לתקופה ${startMonth} עד ${endMonth} נמשך בהצלחה. סה"כ לתשלום: ${result.total_payment} ש"ח.`,
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            console.error('iCount error:', (err as any).message);
+            return {
+                success: false,
+                message: `שגיאה במשיכת דוח מע"מ: ${err.message}`,
+            };
+        }
+    },
+});
+
 export const searchInventoryTool = createTool({
     id: 'search_inventory',
     description: 'Search for items, price lists, or services in the iCount inventory.',

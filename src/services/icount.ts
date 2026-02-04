@@ -72,6 +72,16 @@ export class ICountService {
     }
 
     /**
+     * Get VAT report for a period
+     */
+    async getVatReport(startMonth: string, endMonth: string) {
+        return this.request('/reports/vat_report', {
+            start_month: startMonth,
+            end_month: endMonth,
+        });
+    }
+
+    /**
      * Search items in inventory
      */
     async searchItems(query: string) {
