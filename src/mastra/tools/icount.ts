@@ -105,14 +105,18 @@ export const getLastInvoiceTool = createTool({
     description: 'Fetches the details of the most recent invoice (last document) issued in iCount.',
     inputSchema: z.object({
         docType: z.enum(['invrec', 'receipt', 'invoice', 'offer']).optional().describe('Type of document to fetch. e.g. invrec (Invoice & Receipt) or invoice (Tax Invoice).'),
+        searchQuery: z.string().optional().describe('Optional: filter by client name or partial name'),
+        clientId: z.number().optional().describe('Optional: filter by specific client ID'),
     }),
-    execute: async ({ docType }) => {
+    execute: async ({ docType, searchQuery, clientId }) => {
         const doctypesToTry = docType ? [docType] : ['invrec', 'invoice', 'receipt', 'offer'];
 
         try {
             console.log(`[iCount Tool] Fetching last document. Search types: ${doctypesToTry.join(', ')}`);
             const result = await icount.searchDocuments({
                 doctype: doctypesToTry,
+                client_id: clientId,
+                client_name: searchQuery,
                 limit: 1,
                 get_doc_url: true,
                 detail_level: 1,
@@ -292,15 +296,17 @@ export const searchDocumentsTool = createTool({
     description: 'Searches for iCount documents (invoices, receipts, offers, etc.) based on flexible filters like client name, dates, document number or status.',
     inputSchema: z.object({
         searchQuery: z.string().optional().describe('Filter by client name or partial name'),
+        clientId: z.number().optional().describe('Filter by specific client ID (recommended if you have it)'),
         doctype: z.enum(['invrec', 'receipt', 'invoice', 'offer', 'pro', 'order']).optional().describe('Filtered by specific document type'),
         docnum: z.number().optional().describe('Search for a specific document number'),
         startDate: z.string().optional().describe('Filter from this date (YYYY-MM-DD)'),
         endDate: z.string().optional().describe('Filter up to this date (YYYY-MM-DD)'),
-        status: z.number().optional().describe('Document status (0=open, 1=closed, 2=partially closed)'),
+        status: z.number().optional().describe('Document status: 0=open, 1=closed, 2=partially closed'),
     }),
-    execute: async ({ searchQuery, doctype, docnum, startDate, endDate, status }) => {
+    execute: async ({ searchQuery, clientId, doctype, docnum, startDate, endDate, status }) => {
         try {
             const results = await icount.searchDocuments({
+                client_id: clientId,
                 client_name: searchQuery,
                 doctype,
                 docnum,
