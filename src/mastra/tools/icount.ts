@@ -104,10 +104,10 @@ export const getLastInvoiceTool = createTool({
     id: 'get_last_invoice',
     description: 'Fetches the details of the most recent invoice (last document) issued in iCount.',
     inputSchema: z.object({
-        docType: z.enum(['invrec', 'receipt', 'inv', 'offer']).default('invrec').describe('Type of document to fetch. Default is invrec (Invoice & Receipt).'),
+        docType: z.enum(['invrec', 'receipt', 'invoice', 'offer']).optional().describe('Type of document to fetch. e.g. invrec (Invoice & Receipt) or invoice (Tax Invoice).'),
     }),
     execute: async ({ docType }) => {
-        const doctypesToTry = docType ? [docType] : ['invrec', 'receipt', 'inv', 'offer'];
+        const doctypesToTry = docType ? [docType] : ['invrec', 'invoice', 'receipt', 'offer'];
 
         for (const currentType of doctypesToTry) {
             try {
@@ -148,9 +148,9 @@ export const getLastInvoiceTool = createTool({
                 }
             } catch (error: unknown) {
                 console.warn(`[iCount Tool] doctype ${currentType} failed:`, (error as Error).message);
-                // Continue to next doctype unless it was an explicit request
+                // Continue to next doctype unless it was an explicit request from the user for a SPECIFIC type
                 if (docType) {
-                    return { success: false, message: `שגיאה: ${(error as Error).message}` };
+                    return { success: false, message: `שגיאה במשיכת ${currentType}: ${(error as Error).message}` };
                 }
             }
         }
@@ -221,7 +221,7 @@ export const sendDocumentEmailTool = createTool({
     id: 'send_document_email',
     description: 'Sends an existing iCount document (invoice, receipt, offer, etc.) to a client via email.',
     inputSchema: z.object({
-        doctype: z.enum(['invrec', 'receipt', 'inv', 'offer', 'pro', 'order']).describe('Type of document to send'),
+        doctype: z.enum(['invrec', 'receipt', 'invoice', 'offer', 'pro', 'order']).describe('Type of document to send'),
         docnum: z.number().describe('The document number'),
         email: z.string().optional().describe('Recipient email address. If not provided, it will be sent to the clients default email in iCount.'),
         comment: z.string().optional().describe('Optional comment/text to include in the email body'),
@@ -309,7 +309,7 @@ export const searchDocumentsTool = createTool({
     description: 'Searches for iCount documents (invoices, receipts, offers, etc.) based on flexible filters like client name, dates, document number or status.',
     inputSchema: z.object({
         searchQuery: z.string().optional().describe('Filter by client name or partial name'),
-        doctype: z.enum(['invrec', 'receipt', 'inv', 'offer', 'pro', 'order']).optional().describe('Filtered by specific document type'),
+        doctype: z.enum(['invrec', 'receipt', 'invoice', 'offer', 'pro', 'order']).optional().describe('Filtered by specific document type'),
         docnum: z.number().optional().describe('Search for a specific document number'),
         startDate: z.string().optional().describe('Filter from this date (YYYY-MM-DD)'),
         endDate: z.string().optional().describe('Filter up to this date (YYYY-MM-DD)'),
