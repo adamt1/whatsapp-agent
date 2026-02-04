@@ -81,19 +81,39 @@ export class ICountService {
     }
 
     /**
-     * Get last documents of a certain type
+     * Search documents with various filters
+     */
+    async searchDocuments(params: {
+        doctype?: string;
+        docnum?: string | number;
+        client_name?: string;
+        client_id?: number;
+        start_date?: string;
+        end_date?: string;
+        status?: number;
+        limit?: number;
+        sort_field?: string;
+        sort_order?: 'ASC' | 'DESC';
+    }) {
+        return this.request('/doc/search', {
+            limit: 10,
+            sort_field: 'dateissued',
+            sort_order: 'DESC',
+            ...params
+        });
+    }
+
+    /**
+     * Get last documents of a certain type (helper using search)
      */
     async getLastDocuments(params: {
         doctype: string;
         limit?: number;
     }) {
-        const data = await this.request('/doc/search', {
+        return this.searchDocuments({
             doctype: params.doctype,
-            limit: params.limit || 1,
-            order_by: 'docnum',
-            order_dir: 'DESC'
+            limit: params.limit || 1
         });
-        return data;
     }
 
     /**

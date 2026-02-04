@@ -312,3 +312,59 @@ export const getProfitabilityReportTool = createTool({
         }
     },
 });
+
+export const searchDocumentsTool = createTool({
+    id: 'search_documents',
+    description: 'Searches for iCount documents (invoices, receipts, offers, etc.) based on flexible filters like client name, dates, document number or status.',
+    inputSchema: z.object({
+        searchQuery: z.string().optional().describe('Filter by client name or partial name'),
+        doctype: z.enum(['invrec', 'receipt', 'inv', 'offer', 'pro', 'order']).optional().describe('Filtered by specific document type'),
+        docnum: z.number().optional().describe('Search for a specific document number'),
+        startDate: z.string().optional().describe('Filter from this date (YYYY-MM-DD)'),
+        endDate: z.string().optional().describe('Filter up to this date (YYYY-MM-DD)'),
+        status: z.number().optional().describe('Document status (0=open, 1=closed, 2=partially closed)'),
+    }),
+    execute: async ({ searchQuery, doctype, docnum, startDate, endDate, status }) => {
+        try {
+            const results = await icount.searchDocuments({
+                client_name: searchQuery,
+                doctype,
+                docnum,
+                start_date: startDate,
+                end_date: endDate,
+                status,
+            });
+
+            const docs = results.results_list || [];
+
+            if (docs.length === 0) {
+                return {
+                    success: false,
+                    message: 'לא נמצאו מסמכים העונים על הגדרות החיפוש.',
+                };
+            }
+
+            const formattedDocs = docs.map((d: any) => ({
+                id: `${d.doctype}-${d.docnum}`,
+                type: d.doctype,
+                number: d.docnum,
+                date: d.dateissued,
+                client: d.client_name,
+                total: `${d.total} ${d.currency_code}`,
+                status: d.status === 1 ? 'סגור' : (d.status === 0 ? 'פתוח' : 'סגור חלקית'),
+            }));
+
+            return {
+                success: true,
+                documents: formattedDocs,
+                message: `נמצאו ${docs.length} מסמכים התואמים לחיפוש.`,
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            return {
+                success: false,
+                message: `שגיאה בחיפוש מסמכים: ${err.message}`,
+            };
+        }
+    },
+});
