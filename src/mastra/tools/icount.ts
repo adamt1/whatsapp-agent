@@ -101,6 +101,30 @@ export const getVatReportTool = createTool({
     },
 });
 
+export const getIncomeTypesTool = createTool({
+    id: 'get_income_types',
+    description: 'Fetches the list of available income types (revenue categories) from iCount.',
+    inputSchema: z.object({}),
+    execute: async () => {
+        try {
+            const result = await icount.getIncomeTypes();
+            const types = result.income_types || [];
+
+            return {
+                success: true,
+                incomeTypes: types,
+                message: `נמצאו ${types.length || Object.keys(types).length} סוגי הכנסה במערכת.`,
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            return {
+                success: false,
+                message: `שגיאה במשיכת סוגי הכנסה: ${err.message}`,
+            };
+        }
+    },
+});
+
 export const searchInventoryTool = createTool({
     id: 'search_inventory',
     description: 'Search for items, price lists, or services in the iCount inventory.',

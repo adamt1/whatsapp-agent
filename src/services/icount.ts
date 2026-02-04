@@ -191,6 +191,13 @@ export class ICountService {
     }
 
     /**
+     * Get list of income types
+     */
+    async getIncomeTypes(list_type: 'array' | 'object' = 'array') {
+        return this.request('/income_type/get_list', { list_type });
+    }
+
+    /**
      * Send an existing document by email
      */
     async sendDocEmail(params: {
