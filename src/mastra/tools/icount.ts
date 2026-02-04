@@ -226,6 +226,46 @@ export const getClientsTool = createTool({
     },
 });
 
+export const sendDocumentEmailTool = createTool({
+    id: 'send_document_email',
+    description: 'Sends an existing iCount document (invoice, receipt, offer, etc.) to a client via email.',
+    inputSchema: z.object({
+        doctype: z.enum(['invrec', 'receipt', 'inv', 'offer', 'pro', 'order']).describe('Type of document to send'),
+        docnum: z.number().describe('The document number'),
+        email: z.string().optional().describe('Recipient email address. If not provided, it will be sent to the clients default email in iCount.'),
+        comment: z.string().optional().describe('Optional comment/text to include in the email body'),
+    }),
+    execute: async ({ doctype, docnum, email, comment }) => {
+        try {
+            const params: any = {
+                doctype,
+                docnum,
+                email_comment: comment,
+            };
+
+            if (email) {
+                params.email_to = email;
+            } else {
+                params.email_to_client = true;
+            }
+
+            const result = await icount.sendDocEmail(params);
+
+            return {
+                success: true,
+                message: `המסמך (${doctype} ${docnum}) נשלח בהצלחה${email ? ` לכתובת ${email}` : ' לכתובת המייל של הלקוח'}.`,
+                result
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            return {
+                success: false,
+                message: `שגיאה בשליחת המסמך במייל: ${err.message}`,
+            };
+        }
+    },
+});
+
 export const getProfitabilityReportTool = createTool({
     id: 'get_profitability_report',
     description: 'Fetches monthly profitability data (invoices, receipts, expenses, profit) for a specific date range.',

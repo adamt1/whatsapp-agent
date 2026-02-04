@@ -137,6 +137,20 @@ export class ICountService {
     async getCompanyInfo() {
         return this.request('/company/info');
     }
+
+    /**
+     * Send an existing document by email
+     */
+    async sendDocEmail(params: {
+        doctype: string;
+        docnum: number;
+        email_to?: string;
+        email_to_client?: boolean;
+        email_comment?: string;
+        email_subject?: string;
+    }) {
+        return this.request('/doc/email', params);
+    }
 }
 
 export const icount = new ICountService();

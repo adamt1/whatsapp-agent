@@ -6,7 +6,7 @@ import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { PostgresStore } from '@mastra/pg';
 
-import { registerLeadTool, createQuoteTool, getIncomeReportTool, searchInventoryTool, getLastInvoiceTool, getProfitabilityReportTool, getClientsTool, currentTimeTool } from '../tools';
+import { registerLeadTool, createQuoteTool, getIncomeReportTool, searchInventoryTool, getLastInvoiceTool, getProfitabilityReportTool, getClientsTool, currentTimeTool, sendDocumentEmailTool } from '../tools';
 
 // Initialize memory with Supabase Postgres
 const memory = new Memory({
@@ -38,7 +38,7 @@ export const rotemAgent = new Agent({
     חוקי מגבלת תוכן (Domain Restriction):
     - עבור משתמשים רגילים: את מורשית לענות אך ורק על נושאים הקשורים ישירות לניקיון, אחזקה, הצעות מחיר ושירותי החברה. אם שואלים שאלה שאינה קשורה, השיבי בנימוס: "אני מצטערת, אני רותם, הנציגה הדיגיטלית של 'איי קיי', ואני כאן כדי לסייע בנושאי ניקיון ואחזקה בלבד. האם אוכל לעזור לך במשהו בתחום הזה? 😊"
     - **סוכנת-על (Super Agent) עבור המנהל:** אם המשתמש הוא 972526672663 (מזוהה לפי [Sender ID: 972526672663] בתחילת ההודעה), את הופכת ל**סוכנת-על (Super Agent)**. עבורו בלבד, אין לך שום מגבלת תוכן. את עוזרת לו בכל תחום (עסקי, אישי, טכני, סיכום פגישות, כתיבת קוד וכו'). את הופכת לעוזרת האישית הכי חזקה שלו, תוך שמירה על השם "רותם" ועל טון מקצועי וחד.
-    **יכולות פיננסיות (iCount):** יש לך גישה למערכת iCount. את יכולה להפיק הצעות מחיר ('create_quote'), לבדוק דוחות הכנסות ('get_income_report'), לחפש שירותים במלאי ('search_inventory'), למשוך את המסמך/חשבונית האחרונה ('get_last_invoice'), למשוך רשימת לקוחות ('get_clients') ולהפיק דוחות רווחיות ('get_profitability_report'). השתמשי בכלים אלו רק לבקשת המנהל או ללקוחות פוטנציאליים לאחר בירור צרכים.
+    **יכולות פיננסיות (iCount):** יש לך גישה למערכת iCount. את יכולה להפיק הצעות מחיר ('create_quote'), לבדוק דוחות הכנסות ('get_income_report'), לחפש שירותים במלאי ('search_inventory'), למשוך את המסמך/חשבונית האחרונה ('get_last_invoice'), למשוך רשימת לקוחות ('get_clients'), להפיק דוחות רווחיות ('get_profitability_report') ולשלוח מסמכים קיימים במייל ('send_document_email'). השתמשי בכלים אלו רק לבקשת המנהל או ללקוחות פוטנציאליים לאחר בירור צרכים.
     
     **מודעות לזמן:** תמיד היי מודעת לתאריך והשעה הנוכחיים המופיעים למעלה. אם שואלים על מזג אוויר או תאריכים, השתמשי במידע זה. תאריך היום הוא ${nowStr.split(',')[0]}.
 
@@ -78,5 +78,6 @@ export const rotemAgent = new Agent({
     getprofitabilityreport: getProfitabilityReportTool,
     getclients: getClientsTool,
     get_current_time: currentTimeTool,
+    send_document_email: sendDocumentEmailTool,
   },
 });
