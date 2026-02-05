@@ -174,6 +174,7 @@ Deno.serve(async (req: Request) => {
                     body: JSON.stringify({
                         message: text,
                         chatId: chatId,
+                        messageId: payload.idMessage,
                         messageType: isAudio ? "audio" : "text",
                         downloadUrl: downloadUrl,
                         mimeType: mimeType,

@@ -317,13 +317,25 @@ export const getLastInvoiceTool = createTool({
 
 export const getClientsTool = createTool({
     id: 'get_clients',
-    description: 'Fetches a list of clients from iCount, optionally filtered by name, email, or phone.',
+    description: 'Fetches a list of clients from iCount, optionally filtered by name, email, phone, or specific ID. Can also search for leads.',
     inputSchema: z.object({
-        searchQuery: z.string().optional().describe('Filter by client name, email, or phone number'),
+        searchQuery: z.string().optional().describe('Filter by client name'),
+        clientId: z.number().optional().describe('Filter by specific client ID'),
+        email: z.string().optional().describe('Filter by email'),
+        phone: z.string().optional().describe('Filter by phone'),
+        isLead: z.boolean().optional().describe('If true, searches for leads'),
+        detailLevel: z.number().optional().describe('Level of detail (0-10)'),
     }),
-    execute: async ({ searchQuery }) => {
+    execute: async ({ searchQuery, clientId, email, phone, isLead, detailLevel }) => {
         try {
-            const result = await icount.getClients({ searchQuery });
+            const result = await icount.getClients({
+                searchQuery,
+                client_id: clientId,
+                email,
+                phone,
+                is_lead: isLead,
+                detail_level: detailLevel,
+            });
 
             // iCount API uses 'clients' key, but we handle 'client_list' for legacy support
             const clientsRaw = result.clients || result.client_list;
@@ -511,6 +523,219 @@ export const searchDocumentsTool = createTool({
             return {
                 success: false,
                 message: `שגיאה בחיפוש מסמכים: ${err.message}`,
+            };
+        }
+    },
+});
+
+export const getEventsListTool = createTool({
+    id: 'get_events_list',
+    description: 'Fetches a list of CRM events from iCount, optionally filtered by client, date, or event ID.',
+    inputSchema: z.object({
+        clientId: z.number().optional().describe('Filter by client ID'),
+        eventId: z.number().optional().describe('Filter by specific event ID'),
+        startDate: z.string().optional().describe('Filter from this creation date (YYYY-MM-DD)'),
+        endDate: z.string().optional().describe('Filter up to this creation date (YYYY-MM-DD)'),
+        limit: z.number().optional().describe('Limit the number of results'),
+    }),
+    execute: async ({ clientId, eventId, startDate, endDate, limit }) => {
+        try {
+            const result = await icount.getEventsList({
+                client_id: clientId,
+                event_id: eventId,
+                created_date_start: startDate,
+                created_date_end: endDate,
+                limit,
+            });
+
+            const events = result.events || [];
+
+            return {
+                success: true,
+                events,
+                message: `נמצאו ${events.length} אירועי CRM במערכת.`,
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            return {
+                success: false,
+                message: `שגיאה במשיכת אירועי CRM: ${err.message}`,
+            };
+        }
+    },
+});
+
+export const getClientTypesTool = createTool({
+    id: 'get_client_types',
+    description: 'Fetches the list of client types defined in iCount.',
+    inputSchema: z.object({}),
+    execute: async () => {
+        try {
+            const result = await icount.getClientTypes();
+            const types = result.client_types || [];
+
+            return {
+                success: true,
+                types,
+                message: `נמצאו ${Object.keys(types).length} סוגי לקוחות במערכת.`,
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            return {
+                success: false,
+                message: `שגיאה במשיכת סוגי לקוחות: ${err.message}`,
+            };
+        }
+    },
+});
+
+export const getClientCustomInfoTool = createTool({
+    id: 'get_client_custom_info',
+    description: 'Fetches custom/additional information for a specific client in iCount.',
+    inputSchema: z.object({
+        clientId: z.number().optional().describe('The iCount client ID'),
+        email: z.string().optional().describe('Client email address'),
+        clientName: z.string().optional().describe('Client name'),
+    }),
+    execute: async ({ clientId, email, clientName }) => {
+        try {
+            const result = await icount.getClientCustomInfo({
+                client_id: clientId,
+                email,
+                client_name: clientName,
+            });
+
+            return {
+                success: true,
+                customInfo: result.custom_info,
+                message: `מידע מותאם אישית עבור הלקוח התקבל בהצלחה.`,
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            return {
+                success: false,
+                message: `שגיאה במשיכת מידע מותאם אישית ללקוח: ${err.message}`,
+            };
+        }
+    },
+});
+
+export const getContactTypesTool = createTool({
+    id: 'get_contact_types',
+    description: 'Fetches the list of possible contact types defined in iCount.',
+    inputSchema: z.object({}),
+    execute: async () => {
+        try {
+            const result = await icount.getContactTypes();
+            return {
+                success: true,
+                contactTypes: result.contact_types || [],
+                message: 'רשימת סוגי אנשי קשר התקבלה בהצלחה.',
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            return {
+                success: false,
+                message: `שגיאה במשיכת סוגי אנשי קשר: ${err.message}`,
+            };
+        }
+    },
+});
+
+export const addContactTool = createTool({
+    id: 'add_contact',
+    description: 'Adds a new contact person to an existing client in iCount.',
+    inputSchema: z.object({
+        clientId: z.number().describe('The iCount client ID to add the contact to'),
+        firstName: z.string().describe('Contact first name'),
+        lastName: z.string().optional().describe('Contact last name'),
+        email: z.string().optional().describe('Contact email'),
+        phone: z.string().optional().describe('Contact phone'),
+        mobile: z.string().optional().describe('Contact mobile'),
+        contactType: z.string().optional().describe('Contact type (retrieve list using get_contact_types)'),
+    }),
+    execute: async ({ clientId, firstName, lastName, email, phone, mobile, contactType }) => {
+        try {
+            const result = await icount.addContact({
+                client_id: clientId,
+                first_name: firstName,
+                last_name: lastName,
+                email,
+                phone,
+                mobile,
+                contact_type: contactType,
+            });
+
+            return {
+                success: true,
+                contactId: result.contact_id,
+                message: `איש קשר חדש ${firstName} ${lastName || ''} נוסף בהצלחה ללקוח (מזהה: ${result.contact_id}).`,
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            return {
+                success: false,
+                message: `שגיאה בהוספת איש קשר: ${err.message}`,
+            };
+        }
+    },
+});
+
+export const updateContactTool = createTool({
+    id: 'update_contact',
+    description: 'Updates information for an existing contact person in iCount.',
+    inputSchema: z.object({
+        contactId: z.number().describe('The iCount contact ID to update'),
+        firstName: z.string().optional().describe('Contact first name'),
+        lastName: z.string().optional().describe('Contact last name'),
+        email: z.string().optional().describe('Contact email'),
+        phone: z.string().optional().describe('Contact phone'),
+        mobile: z.string().optional().describe('Contact mobile'),
+    }),
+    execute: async ({ contactId, firstName, lastName, email, phone, mobile }) => {
+        try {
+            const result = await icount.updateContact({
+                contact_id: contactId,
+                first_name: firstName,
+                last_name: lastName,
+                email,
+                phone,
+                mobile,
+            });
+
+            return {
+                success: true,
+                message: `פרטי איש הקשר (מזהה: ${contactId}) עודכנו בהצלחה.`,
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            return {
+                success: false,
+                message: `שגיאה בעדכון איש קשר: ${err.message}`,
+            };
+        }
+    },
+});
+
+export const getDeductionTypesTool = createTool({
+    id: 'get_deduction_types',
+    description: 'Fetches the list of deduction types (withholding tax) from iCount.',
+    inputSchema: z.object({}),
+    execute: async () => {
+        try {
+            const result = await icount.getDeductionTypes();
+            const types = result.deduction_types || [];
+
+            return {
+                success: true,
+                deductionTypes: types,
+                message: `נמצאו ${Object.keys(types).length} סוגי ניכויים במערכת.`,
+            };
+        } catch (error: unknown) {
+            const err = error as Error;
+            return {
+                success: false,
+                message: `שגיאה במשיכת סוגי ניכויים: ${err.message}`,
             };
         }
     },

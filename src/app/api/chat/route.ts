@@ -23,7 +23,7 @@ const elevenlabs = new ElevenLabsClient({
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { message, chatId, messageType, isPaused, downloadUrl } = body;
+        const { message, chatId, messageId, messageType, isPaused, downloadUrl } = body;
 
         console.log(`[Next.js API] Received request for chatId: ${chatId}, type: ${messageType}`);
 
@@ -101,6 +101,9 @@ export async function POST(req: NextRequest) {
             // }
             const requestContext = new RequestContext();
             requestContext.set('now', nowInIsrael);
+            if (messageId) {
+                requestContext.set('messageId', messageId);
+            }
 
             // Diagnostics removed as per instruction
             // const hasGet = typeof requestContext.get === 'function';
@@ -109,6 +112,7 @@ export async function POST(req: NextRequest) {
 
             result = await rotem.generate(messageWithContext, {
                 requestContext,
+                maxSteps: 5,
                 memory: {
                     thread: chatId,
                     resource: chatId,

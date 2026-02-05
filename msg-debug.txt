@@ -1,0 +1,7 @@
+[dotenv@17.2.3] injecting env (14) from .env.local -- tip: ⚙️  override existing env vars with { override: true }
+---
+Role: user
+Content: {"format":2,"parts":[{"type":"text","text":"[Current Date/Time: יום חמישי, 5 בפברואר 2026 בשעה 12:02:38]\n[Sender ID: 972526672663]\nרותם תזכרי אותי בשעה 12:05 להעיר את הבן שלי"}],"content":"[Current Date/Time: יום חמישי, 5 בפברואר 2026 בשעה 12:02:38]\n[Sender ID: 972526672663]\nרותם תזכרי אותי בשעה 12:05 להעיר את הבן שלי"}
+---
+Role: assistant
+Content: {"format":2,"parts":[{"type":"text","text":"היי! אני רותם, הנציגה הדיגיטלית של 'איי קיי חברת ניקיון ואחזקה' 🧹. אני שמחה לעזור לך עם כל דבר שתצטרך. אני רושמת לעצמי להזכיר לך היום, יום חמישי ה-5 בפברואר 2026, בשעה 12:05, להעיר את הבן שלך. אני אדאג לשלוח לך תזכורת בזמן כדי שלא תשכח! ⏰✨\n\nאם יש משהו נוסף שאתה צריך, אני כאן בשבילך! 😊🙌\n\nבברכה, רותם 😊"}],"content":"היי! אני רותם, הנציגה הדיגיטלית של 'איי קיי חברת ניקיון ואחזקה' 🧹. אני שמחה לעזור לך עם כל דבר שתצטרך. אני רושמת לעצמי להזכיר לך היום, יום חמישי ה-5 בפברואר 2026, בשעה 12:05, להעיר את הבן שלך. אני אדאג לשלוח לך תזכורת בזמן כדי שלא תשכח! ⏰✨\n\nאם יש משהו נוסף שאתה צריך, אני כאן בשבילך! 😊🙌\n\nבברכה, רותם 😊"}

@@ -169,11 +169,18 @@ export class ICountService {
      */
     async getClients(params: {
         searchQuery?: string;
+        client_id?: number;
+        email?: string;
+        phone?: string;
+        mobile?: string;
+        is_lead?: boolean;
         include_leads?: boolean;
+        detail_level?: number;
     } = {}) {
         const query: any = {
             list_type: 'array',
             include_leads: params.include_leads ?? true,
+            ...params
         };
 
         if (params.searchQuery) {
@@ -181,6 +188,52 @@ export class ICountService {
         }
 
         return this.request('/client/get_list', query);
+    }
+
+    /**
+     * Get CRM events list
+     */
+    async getEventsList(params: {
+        event_id?: number;
+        client_id?: number;
+        created_by?: number;
+        created_date?: string;
+        created_date_start?: string;
+        created_date_end?: string;
+        show_deleted?: boolean;
+        get_tags?: boolean;
+        get_tasks?: boolean;
+        get_notifications?: boolean;
+        get_files?: boolean;
+        sort_field?: string;
+        sort_order?: 'ASC' | 'DESC';
+        offset?: number;
+        limit?: number;
+    } = {}) {
+        return this.request('/crm_event/get_list', {
+            list_type: 'array',
+            ...params,
+        });
+    }
+
+    /**
+     * Get client types
+     */
+    async getClientTypes(list_type: 'array' | 'object' = 'array') {
+        return this.request('/client/types', { list_type });
+    }
+
+    /**
+     * Get custom client info
+     */
+    async getClientCustomInfo(params: {
+        client_id?: number;
+        custom_client_id?: string;
+        vat_id?: number;
+        email?: string;
+        client_name?: string;
+    }) {
+        return this.request('/client/get_custom_info', params);
     }
 
     /**
@@ -213,6 +266,51 @@ export class ICountService {
      */
     async getPrivLevels(list_type: 'array' | 'object' = 'array') {
         return this.request('/user/priv_levels', { list_type });
+    }
+
+    /**
+     * Get contact types
+     */
+    async getContactTypes() {
+        return this.request('/client/contact_types');
+    }
+
+    /**
+     * Add a contact to a client
+     */
+    async addContact(params: {
+        client_id?: number;
+        first_name?: string;
+        last_name?: string;
+        email?: string;
+        phone?: string;
+        mobile?: string;
+        contact_type?: string;
+        [key: string]: any;
+    }) {
+        return this.request('/client/add_contact', params);
+    }
+
+    /**
+     * Update a client contact
+     */
+    async updateContact(params: {
+        contact_id: number;
+        first_name?: string;
+        last_name?: string;
+        email?: string;
+        phone?: string;
+        mobile?: string;
+        [key: string]: any;
+    }) {
+        return this.request('/client/update_contact', params);
+    }
+
+    /**
+     * Get deduction types
+     */
+    async getDeductionTypes(list_type: 'array' | 'object' = 'array') {
+        return this.request('/deduction_type/get_list', { list_type });
     }
 
     /**
