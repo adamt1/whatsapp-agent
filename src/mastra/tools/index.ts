@@ -124,6 +124,8 @@ export const sendEmailTool = createTool({
         to: z.string().email().describe('Recipient email address'),
         subject: z.string().describe('Email subject'),
         body: z.string().describe('Email body content'),
+        attachmentUrl: z.string().optional().describe('MANDATORY if sending a file: The public download URL of the file (e.g. from the [File Available: URL] marker in the prompt OR from get_recent_attachments)'),
+        fileName: z.string().optional().describe('MANDATORY if sending a file: The original name of the file including extension (e.g. from the [File Available: ... (Name: FILENAME)] marker)'),
     }),
     execute: async (args, context) => {
         const WEBHOOK_URL = 'https://akcleaninng.app.n8n.cloud/webhook/send-email';
@@ -161,6 +163,50 @@ export const sendEmailTool = createTool({
         } catch (error) {
             console.error('Email error:', error);
             return { success: false, message: 'חלה שגיאה בשליחת המייל.' };
+        }
+    },
+});
+
+export const getRecentAttachmentsTool = createTool({
+    id: 'get_recent_attachments',
+    description: 'Retrieves metadata about recent files/attachments received from the user on WhatsApp.',
+    inputSchema: z.object({
+        limit: z.number().default(5).describe('Number of recent attachments to retrieve'),
+    }),
+    execute: async ({ limit }) => {
+        try {
+            await supabase.from('debug_logs').insert({
+                payload: {
+                    diag: 'tool-call-local',
+                    tool: 'get_recent_attachments',
+                    request: { limit }
+                }
+            });
+
+            const { data, error } = await supabase
+                .from('debug_logs')
+                .select('payload, created_at')
+                .eq('payload->>diag', 'webhook-received')
+                .not('payload->full->messageData->fileMessageData', 'is', null)
+                .order('created_at', { ascending: false })
+                .limit(limit as number);
+
+            if (error) throw error;
+
+            const attachments = data.map((log: any) => {
+                const fileData = log.payload.full.messageData.fileMessageData;
+                return {
+                    fileName: fileData.fileName,
+                    mimeType: fileData.mimeType,
+                    downloadUrl: fileData.downloadUrl,
+                    timestamp: log.created_at,
+                };
+            });
+
+            return { success: true, attachments };
+        } catch (error) {
+            console.error('Error fetching attachments:', error);
+            return { success: false, message: 'חלה שגיאה במשיכת הקבצים האחרונים.' };
         }
     },
 });

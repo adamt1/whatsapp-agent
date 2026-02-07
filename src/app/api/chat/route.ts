@@ -23,7 +23,7 @@ const elevenlabs = new ElevenLabsClient({
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { message, chatId, messageId, messageType, isPaused, downloadUrl } = body;
+        const { message, chatId, messageId, messageType, isPaused, downloadUrl, isSelfChat } = body;
 
         console.log(`[Next.js API] Received request for chatId: ${chatId}, type: ${messageType}`);
 
@@ -90,7 +90,9 @@ export async function POST(req: NextRequest) {
             dateStyle: 'full',
             timeStyle: 'medium'
         });
-        const messageWithContext = `[Current Date/Time: ${nowInIsrael}]\n[Sender ID: ${senderId}]\n${incomingText}`;
+        const selfChatContext = isSelfChat ? `[Self-Chat Notice: This message was sent by the owner to himself. Stay in Background Mode (don't respond) unless this is a direct command or mentions "Rotem".]\n` : '';
+        const messageWithContext = `[Current Date/Time: ${nowInIsrael}]\n[Sender ID: ${senderId}]\n${selfChatContext}${downloadUrl ? `[File Available: ${downloadUrl}${body.fileName ? ` (Name: ${body.fileName})` : ''}]\n` : ''}${incomingText}`;
+
 
         try {
             console.log(`Calling Mastra generate for ${chatId}...`);
@@ -99,6 +101,8 @@ export async function POST(req: NextRequest) {
             // if (!isPaused) {
             //     greenApi.sendTyping(chatId, 'typing', 10000);
             // }
+            console.log(`[Debug] messageWithContext: \n${messageWithContext}`);
+
             const requestContext = new RequestContext();
             requestContext.set('now', nowInIsrael);
             if (messageId) {
@@ -155,6 +159,18 @@ export async function POST(req: NextRequest) {
 
         const replyText = result.text;
         console.log(`Generated reply for ${chatId}: ${replyText}`);
+
+        // Log the final decision of the agent regarding tool calls
+        if (result.steps) {
+            console.log(`[Debug] Mastra Steps:`, JSON.stringify(result.steps, null, 2));
+            await supabase.from('debug_logs').insert({
+                payload: {
+                    diag: 'mastra-steps',
+                    chatId,
+                    steps: result.steps
+                }
+            });
+        }
 
         // BACKGROUND MODE: If paused, don't send the reply
         if (isPaused) {

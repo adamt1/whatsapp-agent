@@ -71,19 +71,22 @@ Deno.serve(async (req: Request) => {
             // SPECIAL CASE: If it's a manual message to self, treat it as an incoming prompt!
             if (isManual && chatId === wid) {
                 console.log(`Self-chat detected for owner ${wid}. Processing as incoming prompt.`);
+                // Force it to be processed as an incoming message
                 payload.typeWebhook = "incomingMessageReceived";
                 payload.senderData = {
                     chatId: wid,
                     sender: wid,
-                    senderName: payload.senderData?.senderName || "Owner",
+                    senderName: payload.senderData?.senderName || "Owner (Self)",
+                    chatName: "Self"
                 };
             }
         }
 
-        // Filter for incoming messages
-        if (payload.typeWebhook === "incomingMessageReceived") {
-            const chatId = payload.senderData?.chatId || "";
+        // Filter for incoming messages (including simulated ones from self-chat)
+        if (payload.typeWebhook === "incomingMessageReceived" || (payload.typeWebhook === "outgoingMessageReceived" && (payload.chatId === payload.instanceData?.wid))) {
+            const chatId = payload.senderData?.chatId || payload.chatId || "";
             const sender = payload.senderData?.sender || chatId;
+            // ... (rest of filtering logic)
             const senderNumber = sender?.split("@")[0];
             const senderName = payload.senderData?.senderName || "";
             const chatName = payload.senderData?.chatName || "";
@@ -155,16 +158,32 @@ Deno.serve(async (req: Request) => {
                 }
             }
 
-            const isAudio = payload.messageData?.typeMessage === "audioMessage";
-            const fileData = isAudio ? payload.messageData.fileMessageData : null;
+            const typeMessage = payload.messageData?.typeMessage;
+            const isAudio = typeMessage === "audioMessage";
+            const isImage = typeMessage === "imageMessage";
+            const isVideo = typeMessage === "videoMessage";
+            const isDocument = typeMessage === "documentMessage";
+
+            const fileData = (isAudio || isImage || isVideo || isDocument) ? payload.messageData.fileMessageData : null;
             const downloadUrl = fileData?.downloadUrl;
             const mimeType = fileData?.mimeType;
+            const fileName = fileData?.fileName;
 
             const text = payload.messageData?.textMessageData?.textMessage ||
                 payload.messageData?.extendedTextMessageData?.text ||
-                (isAudio ? "שלחת לי הודעה קולית" : ""); // Handle audio gracefully
+                payload.messageData?.fileMessageData?.caption ||
+                (isAudio ? "שלחת לי הודעה קולית" :
+                    isImage ? "שלחת לי תמונה" :
+                        isVideo ? "שלחת לי סרטון" :
+                            isDocument ? "שלחת לי מסמך" : "");
 
-            console.log(`Incoming ${isAudio ? 'audio' : 'text'} message from ${senderNumber}: ${text}`);
+            let effectiveMessageType = "text";
+            if (isAudio) effectiveMessageType = "audio";
+            else if (isImage) effectiveMessageType = "image";
+            else if (isVideo) effectiveMessageType = "video";
+            else if (isDocument) effectiveMessageType = "document";
+
+            console.log(`Incoming ${effectiveMessageType} message from ${senderNumber}: ${text}`);
 
             // 4. Forward to Next.js API
             try {
@@ -175,8 +194,9 @@ Deno.serve(async (req: Request) => {
                         message: text,
                         chatId: chatId,
                         messageId: payload.idMessage,
-                        messageType: isAudio ? "audio" : "text",
+                        messageType: effectiveMessageType,
                         downloadUrl: downloadUrl,
+                        fileName: fileName,
                         mimeType: mimeType,
                         isPaused: isPaused
                     })
@@ -198,7 +218,10 @@ Deno.serve(async (req: Request) => {
                             sentPayload: {
                                 message: text,
                                 chatId: chatId,
-                                isPaused: isPaused
+                                isPaused: isPaused,
+                                downloadUrl: downloadUrl,
+                                fileName: fileName,
+                                messageType: effectiveMessageType
                             }
                         }
                     });
