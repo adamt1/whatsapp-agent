@@ -20,6 +20,15 @@ const elevenlabs = new ElevenLabsClient({
 
 
 
+export async function GET() {
+    return NextResponse.json({
+        status: 'ok',
+        version: '1.0.12-debug',
+        timestamp: '2026-02-07 10:45:00',
+        deployment: 'pushed-via-agent'
+    });
+}
+
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
