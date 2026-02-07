@@ -158,11 +158,12 @@ export const sendEmailTool = createTool({
                 }
             });
 
-            if (!response.ok) throw new Error(`n8n error: ${response.statusText}`);
-            return { success: true, message: 'המייל נשלח בהצלחה!' };
+            const data = JSON.parse(resultText);
+
+            return data;
         } catch (error) {
             console.error('Email error:', error);
-            return { success: false, message: 'חלה שגיאה בשליחת המייל.' };
+            return { success: false, message: 'חלה שגיאה בשליחת המייל.', error: String(error) };
         }
     },
 });

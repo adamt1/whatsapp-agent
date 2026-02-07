@@ -20,15 +20,17 @@ const elevenlabs = new ElevenLabsClient({
 
 
 
+const ROTEM_VERSION = '1.0.14-final-test';
+
 export async function GET() {
     return NextResponse.json({
         status: 'ok',
-        version: '1.0.13-final-test',
+        version: ROTEM_VERSION,
         timestamp: new Date().toISOString(),
         deployment: 'pushed-via-agent-v13'
     }, {
         headers: {
-            'X-Rotem-Version': '1.0.13'
+            'X-Rotem-Version': '1.0.14'
         }
     });
 }
