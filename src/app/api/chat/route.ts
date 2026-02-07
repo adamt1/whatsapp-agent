@@ -23,9 +23,13 @@ const elevenlabs = new ElevenLabsClient({
 export async function GET() {
     return NextResponse.json({
         status: 'ok',
-        version: '1.0.12-debug',
-        timestamp: '2026-02-07 10:45:00',
-        deployment: 'pushed-via-agent'
+        version: '1.0.13-final-test',
+        timestamp: new Date().toISOString(),
+        deployment: 'pushed-via-agent-v13'
+    }, {
+        headers: {
+            'X-Rotem-Version': '1.0.13'
+        }
     });
 }
 
@@ -205,7 +209,7 @@ export async function POST(req: NextRequest) {
 
             // Convert stream to Buffer
             const chunks = [];
-            for await (const chunk of audioStream as any) {
+            for await (const chunk of audioStream as unknown as AsyncIterable<Buffer>) {
                 chunks.push(chunk);
             }
             const audioBuffer = Buffer.concat(chunks);
@@ -241,7 +245,9 @@ export async function POST(req: NextRequest) {
             // Send Text Message via Green API
             await greenApi.sendMessage(chatId, replyText);
 
-            return NextResponse.json({ success: true, type: 'text', reply: replyText });
+            return NextResponse.json({ success: true, type: 'text', reply: replyText }, {
+                headers: { 'X-Rotem-Version': '1.0.13' }
+            });
         }
     } catch (error: unknown) {
         const err = error as Error;

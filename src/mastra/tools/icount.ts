@@ -162,11 +162,11 @@ export const getUsersTool = createTool({
             const usersRaw = result.users || [];
             const usersArr = Array.isArray(usersRaw) ? usersRaw : Object.values(usersRaw);
 
-            const users = usersArr.map((u: any) => ({
-                id: u.user_id,
-                name: u.username,
-                email: u.user_email,
-                privilegeId: u.privilege_id
+            const users = usersArr.map((u: unknown) => ({
+                id: (u as any).user_id,
+                name: (u as any).username,
+                email: (u as any).user_email,
+                privilegeId: (u as any).privilege_id
             }));
 
             return {
@@ -359,11 +359,11 @@ export const getClientsTool = createTool({
                 };
             }
 
-            const clients = clientData.slice(0, 10).map((c: any) => ({
-                id: c.client_id,
-                name: c.client_name,
-                email: c.email || 'אין אימייל',
-                phone: c.mobile || c.phone || 'אין טלפון',
+            const clients = clientData.slice(0, 10).map((c: unknown) => ({
+                id: (c as any).client_id,
+                name: (c as any).client_name,
+                email: (c as any).email || 'אין אימייל',
+                phone: (c as any).mobile || (c as any).phone || 'אין טלפון',
             }));
 
             return {
@@ -502,15 +502,15 @@ export const searchDocumentsTool = createTool({
                 };
             }
 
-            const formattedDocs = docs.map((d: any) => ({
-                id: `${d.doctype}-${d.docnum}`,
-                type: d.doctype,
-                number: d.docnum,
-                date: d.dateissued,
-                client: d.client_name,
-                total: `${d.total} ${d.currency_code || 'ILS'}`,
-                status: d.status === 1 ? 'סגור' : (d.status === 0 ? 'פתוח' : 'סגור חלקית'),
-                url: d.doc_url || '',
+            const formattedDocs = docs.map((d: unknown) => ({
+                id: `${(d as any).doctype}-${(d as any).docnum}`,
+                type: (d as any).doctype,
+                number: (d as any).docnum,
+                date: (d as any).dateissued,
+                client: (d as any).client_name,
+                total: `${(d as any).total} ${(d as any).currency_code || 'ILS'}`,
+                status: (d as any).status === 1 ? 'סגור' : ((d as any).status === 0 ? 'פתוח' : 'סגור חלקית'),
+                url: (d as any).doc_url || '',
             }));
 
             return {
